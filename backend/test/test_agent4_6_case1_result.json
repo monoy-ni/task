@@ -1,0 +1,362 @@
+{
+  "goal": "六个月内学会Python爬虫+数据分析，能独立做电商数据爬取项目",
+  "form_data": {
+    "goal": "六个月内学会Python爬虫+数据分析，能独立做电商数据爬取项目",
+    "experience": "advanced_beginner",
+    "daily_hours": "2-3",
+    "working_days": [
+      "周一",
+      "周二",
+      "周四",
+      "周五",
+      "周日"
+    ],
+    "importance": 4,
+    "deadline": "2025-12-31",
+    "blockers": "工作日晚上易被加班打断，无系统学习路径",
+    "resources": "《Python爬虫实战》书籍、Anaconda环境、jupyter notebook",
+    "expectations": [
+      "分阶段学（爬虫→数据分析→项目）",
+      "每周留1天做实战练习"
+    ]
+  },
+  "analysis": {
+    "task_type": "技能学习类 - 编程技能进阶",
+    "experience_level": "入门基础 - 掌握核心语法，无框架/项目经验",
+    "time_span": "中期(6个月) - 使用月度+周度+日度三层拆解"
+  },
+  "timestamp": "2026-01-29 17:51:25",
+  "follow_up_questions": [
+    {
+      "id": "q1",
+      "question": "你对Python爬虫和数据分析的学习，更倾向于以下哪种方式？",
+      "type": "single",
+      "options": [
+        "通过书籍系统学习",
+        "通过视频课程快速入门",
+        "直接参与项目实践学习"
+      ]
+    },
+    {
+      "id": "q2",
+      "question": "在学习过程中，你更喜欢先从基础知识开始逐步深入，还是直接挑战较难的部分？",
+      "type": "single",
+      "options": [
+        "逐步深入学习",
+        "直接挑战难的部分"
+      ]
+    },
+    {
+      "id": "q3",
+      "question": "你是否有其他编程语言的学习或使用经验，可以迁移到Python学习中？",
+      "type": "multiple",
+      "options": [
+        "Java",
+        "C++",
+        "JavaScript",
+        "HTML/CSS",
+        "SQL",
+        "无其他编程语言经验"
+      ]
+    }
+  ],
+  "user_answers": {
+    "q1": "对数据分析和可视化更感兴趣",
+    "q2": "希望能够快速上手，先做简单项目再深入学习"
+  },
+  "initial_tasks": {
+    "project_name": "Python爬虫与数据分析学习",
+    "overview": "六个月内学会Python爬虫和数据分析，能独立完成电商数据爬取项目",
+    "monthly": {
+      "第1个月": {
+        "goal": "掌握Python基础，熟悉基本爬虫技术",
+        "output": "能够编写简单的爬虫脚本并处理数据",
+        "weeks": [
+          "第1周",
+          "第2周",
+          "第3周",
+          "第4周"
+        ]
+      }
+    },
+    "weekly": {
+      "第1周": {
+        "goal": "学习Python基础语法和数据类型",
+        "output": "产出：完成Python基础语法和数据类型的学习，编写简单的Python程序",
+        "focus": "Python基础"
+      }
+    },
+    "daily": {
+      "第1周": {
+        "Day1": {
+          "title": "安装Python和开发环境",
+          "description": "安装Python 3.9+，配置开发环境（如：PyCharm）",
+          "hours": 1,
+          "output": "产出：开发环境配置完成"
+        },
+        "Day2": {
+          "title": "学习Python基础语法",
+          "description": "学习变量、数据类型、运算符、控制语句（if, for, while）",
+          "hours": 1,
+          "output": "产出：基础语法掌握"
+        },
+        "Day3": {
+          "title": "练习控制语句",
+          "description": "编写简单的控制语句练习代码",
+          "hours": 1,
+          "output": "产出：练习代码完成"
+        },
+        "Day4": {
+          "title": "学习函数和模块",
+          "description": "学习函数定义、模块导入和使用",
+          "hours": 1,
+          "output": "产出：函数和模块掌握"
+        },
+        "Day5": {
+          "title": "练习函数和模块",
+          "description": "编写函数和模块练习代码",
+          "hours": 1,
+          "output": "产出：练习代码完成"
+        },
+        "Day6": {
+          "title": "学习列表和字典",
+          "description": "学习列表、字典的基本操作和常用方法",
+          "hours": 1,
+          "output": "产出：列表和字典掌握"
+        },
+        "Day7": {
+          "title": "机动日",
+          "description": "查漏补缺，复习本周内容",
+          "hours": 1,
+          "output": "产出：本周内容掌握"
+        }
+      }
+    },
+    "metadata": {
+      "requirement": "六个月内学会Python爬虫+数据分析，能独立做电商数据爬取项目",
+      "daily_hours": "2-3",
+      "generated_at": "2026-01-29 17:51:47"
+    }
+  },
+  "optimized_tasks": {
+    "project_name": "Python数据分析与可视化学习",
+    "overview": "通过学习Python基础和数据可视化技术，快速上手并完成一个小项目。",
+    "monthly": {
+      "第1个月": {
+        "goal": "掌握Python基础，熟悉数据可视化技术，并完成一个小项目",
+        "output": "完成一个简单的数据可视化项目",
+        "weeks": [
+          "第1周",
+          "第2周",
+          "第3周",
+          "第4周"
+        ]
+      }
+    },
+    "weekly": {
+      "第1周": {
+        "goal": "学习Python基础语法和数据类型，开始接触数据分析库",
+        "output": "产出：完成Python基础语法和数据类型的学习，熟悉Pandas库",
+        "focus": "Python基础 + 数据分析库"
+      },
+      "第2周": {
+        "goal": "学习数据可视化基础，使用Matplotlib和Seaborn库",
+        "output": "产出：完成数据可视化基础学习，能够使用Matplotlib和Seaborn绘制简单图表",
+        "focus": "数据可视化库"
+      },
+      "第3周": {
+        "goal": "完成一个小项目的初步设计和数据准备",
+        "output": "产出：项目设计文档和数据集准备",
+        "focus": "项目设计 + 数据准备"
+      },
+      "第4周": {
+        "goal": "实现项目的可视化部分并进行调试",
+        "output": "产出：完成并调试数据可视化项目",
+        "focus": "项目实现 + 调试"
+      }
+    },
+    "daily": {
+      "第1周": {
+        "Day1": {
+          "title": "安装Python和Jupyter Notebook",
+          "description": "安装Python和Jupyter Notebook，配置开发环境",
+          "hours": 1,
+          "output": "产出：开发环境配置完成"
+        },
+        "Day2": {
+          "title": "学习Python基础语法",
+          "description": "学习变量、数据类型、控制结构（if/else, for/while）",
+          "hours": 1,
+          "output": "产出：掌握Python基础语法"
+        },
+        "Day3": {
+          "title": "学习函数和模块",
+          "description": "学习函数定义、调用和模块使用",
+          "hours": 1,
+          "output": "产出：能够定义和调用函数，使用模块"
+        },
+        "Day4": {
+          "title": "学习列表和字典",
+          "description": "学习列表、字典的创建、操作和应用",
+          "hours": 1,
+          "output": "产出：掌握列表和字典的使用"
+        },
+        "Day5": {
+          "title": "学习Pandas库基础",
+          "description": "学习Pandas库的安装、DataFrame的创建和基本操作",
+          "hours": 1,
+          "output": "产出：掌握Pandas库基础"
+        },
+        "Day6": {
+          "title": "练习Pandas数据处理",
+          "description": "练习使用Pandas进行数据清洗和处理",
+          "hours": 1,
+          "output": "产出：能够使用Pandas处理数据"
+        },
+        "Day7": {
+          "title": "机动日",
+          "description": "查漏补缺，巩固本周学习内容",
+          "hours": 1,
+          "output": "产出：本周学习内容巩固"
+        }
+      },
+      "第2周": {
+        "Day1": {
+          "title": "安装Matplotlib和Seaborn库",
+          "description": "安装Matplotlib和Seaborn库，配置环境",
+          "hours": 1,
+          "output": "产出：可视化库安装完成"
+        },
+        "Day2": {
+          "title": "学习Matplotlib基础",
+          "description": "学习Matplotlib的安装、基本图表绘制方法",
+          "hours": 1,
+          "output": "产出：掌握Matplotlib基础"
+        },
+        "Day3": {
+          "title": "练习Matplotlib图表",
+          "description": "练习绘制折线图、柱状图、散点图等基本图表",
+          "hours": 1,
+          "output": "产出：能够绘制基本图表"
+        },
+        "Day4": {
+          "title": "学习Seaborn基础",
+          "description": "学习Seaborn的安装、基本图表绘制方法",
+          "hours": 1,
+          "output": "产出：掌握Seaborn基础"
+        },
+        "Day5": {
+          "title": "练习Seaborn图表",
+          "description": "练习绘制热图、箱线图、小提琴图等高级图表",
+          "hours": 1,
+          "output": "产出：能够绘制高级图表"
+        },
+        "Day6": {
+          "title": "综合练习",
+          "description": "结合Pandas和Matplotlib/Seaborn进行数据可视化练习",
+          "hours": 1,
+          "output": "产出：综合数据可视化练习完成"
+        },
+        "Day7": {
+          "title": "机动日",
+          "description": "查漏补缺，巩固本周学习内容",
+          "hours": 1,
+          "output": "产出：本周学习内容巩固"
+        }
+      },
+      "第3周": {
+        "Day1": {
+          "title": "项目选题",
+          "description": "选择一个数据可视化项目主题，确定数据源",
+          "hours": 1,
+          "output": "产出：项目主题和数据源确定"
+        },
+        "Day2": {
+          "title": "项目设计",
+          "description": "设计项目结构和数据处理流程",
+          "hours": 1,
+          "output": "产出：项目设计文档完成"
+        },
+        "Day3": {
+          "title": "数据收集",
+          "description": "从选定的数据源收集数据",
+          "hours": 1,
+          "output": "产出：数据收集完成"
+        },
+        "Day4": {
+          "title": "数据清洗",
+          "description": "使用Pandas进行数据清洗和预处理",
+          "hours": 1,
+          "output": "产出：数据清洗完成"
+        },
+        "Day5": {
+          "title": "数据探索",
+          "description": "进行初步的数据探索和分析",
+          "hours": 1,
+          "output": "产出：数据探索分析完成"
+        },
+        "Day6": {
+          "title": "项目文档细化",
+          "description": "细化项目设计文档，明确每个步骤的实现方法",
+          "hours": 1,
+          "output": "产出：项目设计文档细化完成"
+        },
+        "Day7": {
+          "title": "机动日",
+          "description": "查漏补缺，巩固本周学习内容",
+          "hours": 1,
+          "output": "产出：本周学习内容巩固"
+        }
+      },
+      "第4周": {
+        "Day1": {
+          "title": "图表设计",
+          "description": "设计项目中需要的图表类型和样式",
+          "hours": 1,
+          "output": "产出：图表设计完成"
+        },
+        "Day2": {
+          "title": "实现图表",
+          "description": "使用Matplotlib和Seaborn实现设计的图表",
+          "hours": 1,
+          "output": "产出：图表实现完成"
+        },
+        "Day3": {
+          "title": "图表优化",
+          "description": "优化图表的样式和布局",
+          "hours": 1,
+          "output": "产出：图表优化完成"
+        },
+        "Day4": {
+          "title": "项目整合",
+          "description": "将数据处理和图表绘制整合到项目中",
+          "hours": 1,
+          "output": "产出：项目整合完成"
+        },
+        "Day5": {
+          "title": "项目调试",
+          "description": "调试项目，确保所有功能正常运行",
+          "hours": 1,
+          "output": "产出：项目调试完成"
+        },
+        "Day6": {
+          "title": "项目演示",
+          "description": "准备项目演示文档，测试项目展示效果",
+          "hours": 1,
+          "output": "产出：项目演示文档和展示效果测试完成"
+        },
+        "Day7": {
+          "title": "机动日",
+          "description": "查漏补缺，确保项目按时完成",
+          "hours": 1,
+          "output": "产出：项目最终检查完成"
+        }
+      }
+    },
+    "metadata": {
+      "requirement": "六个月内学会Python爬虫+数据分析，能独立做电商数据爬取项目",
+      "daily_hours": "2-3",
+      "generated_at": "2026-01-29 17:52:41"
+    }
+  }
+}

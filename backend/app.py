@@ -223,13 +223,14 @@ def regenerate_tasks(project_id: str):
         data = request.get_json()
         answers = data.get("answers", {})
 
-        # 调用 AI 服务重新生成
+        # 调用 AI 服务重新生成（传入之前的补充问题以避免重复）
         ai_service = get_ai_service()
         result = ai_service.regenerate_with_answers(
             form_data=project["form_data"],
             answers={**project["answers"], **answers},
             previous_tasks=project["tasks"],
-            analysis=project.get("analysis", {})
+            analysis=project.get("analysis", {}),
+            previous_questions=project.get("follow_up_questions", [])
         )
 
         # 更新项目数据
@@ -249,6 +250,9 @@ def regenerate_tasks(project_id: str):
         })
 
     except Exception as e:
+        import traceback
+        print(f"[ERROR] regenerate_tasks exception: {e}")
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
 

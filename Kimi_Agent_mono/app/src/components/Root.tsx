@@ -108,7 +108,29 @@ export default function Root() {
                     )}
                   </Link>
                 </>
+              ) : location.pathname === '/history' ? (
+                // 历史记录页面
+                <>
+                  <Link
+                    to="/history"
+                    className="relative text-sm font-medium text-mono-primary transition-colors duration-300"
+                  >
+                    历史记录
+                    <span className="absolute -bottom-1 left-1/2 w-1.5 h-1.5 bg-mono-primary rounded-full transform -translate-x-1/2" />
+                  </Link>
+                </>
               ) : null}
+
+              {/* 历史记录链接 - 非首页时显示 */}
+              {!isHomePage && location.pathname !== '/history' && (
+                <Link
+                  to="/history"
+                  className="relative text-sm font-medium text-mono-text-secondary hover:text-mono-primary transition-colors duration-300 group"
+                >
+                  历史记录
+                  <span className="absolute -bottom-1 left-1/2 w-1.5 h-1.5 bg-mono-primary rounded-full transform -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform duration-300" />
+                </Link>
+              )}
             </div>
 
             {/* CTA Button / 返回首页按钮 */}
@@ -210,13 +232,22 @@ export default function Root() {
                   </Link>
                 </>
               ) : (
-                <Link
-                  to="/"
-                  className="mt-4 bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full py-4 font-medium shadow-mono transition-all duration-300 text-center"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  返回首页
-                </Link>
+                <>
+                  <Link
+                    to="/history"
+                    className="text-lg font-medium text-mono-text py-2 px-4 rounded-xl hover:bg-mono-primary/10 transition-colors duration-300"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    历史记录
+                  </Link>
+                  <Link
+                    to="/"
+                    className="mt-4 bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full py-4 font-medium shadow-mono transition-all duration-300 text-center"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    返回首页
+                  </Link>
+                </>
               )}
             </div>
           </div>

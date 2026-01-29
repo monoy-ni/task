@@ -1,16 +1,23 @@
 """
 Agent 6: 专业任务拆解器 - 将需求拆解成月度→周度→日度的详细任务计划
 
-用法：
+用法1：初次拆解
     python test_agent6.py "你的需求描述"
 
 示例：
     python test_agent6.py "做一个博物馆网站，4个页面，统一风格，响应式，一个月上线"
 
+用法2：基于补充问题优化任务
+    python test_agent6.py --regenerate tasks.json --answers "experience=初学者,priority=前端开发"
+
 可选参数：
     --daily-hours 1     每天可用小时数（默认1）
     --weeks 4           总周数（默认4）
     --deadline 2025-03-01  截止日期
+    --json              只输出JSON格式
+    --output file.json  保存到文件
+    --regenerate file   重新生成模式：基于已有任务和补充答案优化
+    --answers k=v,k=v    补充问题答案（配合--regenerate使用）
 """
 
 import os
@@ -244,6 +251,101 @@ class Agent6:
             print(f"[ERROR] 响应内容:\n{response[:500]}")
             return None
 
+    def regenerate(
+        self,
+        original_tasks: dict,
+        answers: dict[str, str],
+        daily_hours: str = "1"
+    ) -> dict:
+        """
+        基于已有任务和补充问题答案重新生成任务计划
+
+        Args:
+            original_tasks: 原始任务拆解结果
+            answers: 补充问题的答案，如 {"q1": "我是初学者", "q2": "每天2小时"}
+            daily_hours: 每天可用小时数
+
+        Returns:
+            优化后的任务拆解结果
+        """
+        # 构建已有任务摘要
+        monthly_summary = []
+        monthly_tasks = original_tasks.get('monthly', {})
+        for month, info in monthly_tasks.items():
+            monthly_summary.append(f"- {month}: {info.get('goal', '')}")
+
+        weekly_summary = []
+        weekly_tasks = original_tasks.get('weekly', {})
+        for week, info in weekly_tasks.items():
+            weekly_summary.append(f"- {week}: {info.get('goal', '')}")
+
+        daily_summary = []
+        daily_tasks = original_tasks.get('daily', {})
+        for week, days in list(daily_tasks.items())[:3]:  # 只显示前3周
+            daily_summary.append(f"- {week}: {len(days)}天任务")
+
+        # 构建补充信息提示
+        answers_text = "\n".join([f"- {k}: {v}" for k, v in answers.items()])
+
+        prompt = f"""请根据用户的补充信息，优化以下任务计划：
+
+## 原始任务计划
+
+月度任务:
+{chr(10).join(monthly_summary[:3])}
+
+周度任务:
+{chr(10).join(weekly_summary[:3])}
+
+日度任务:
+{chr(10).join(daily_summary)}
+
+## 用户补充信息
+
+{answers_text}
+
+请根据这些补充信息，重新调整和优化任务拆解，使其更符合用户的具体情况。
+
+## 优化重点（按优先级）
+
+### 1. 确认关键假设
+基于补充信息，识别并调整任务计划中的关键假设：
+- 技术选型假设（如：使用特定框架/工具）
+- 资源假设（如：团队规模、可用时间、预算）
+- 前置条件假设（如：已有知识、设备、环境）
+
+### 2. 选择策略偏好
+根据用户补充，明确项目策略方向：
+- 速度 vs 质量：快速迭代 vs 精雕细琢
+- 自研 vs 采购：自己实现 vs 使用现成方案
+- 学习 vs 产出：以学习为主 vs 以结果为主
+- 风险态度：激进尝试 vs 稳妥保守
+
+### 3. 识别硬约束/风险
+标记并调整任务以应对：
+- 时间硬约束：不可移动的截止日期
+- 资源硬约束：预算上限、人力限制
+- 技术风险：未知领域、复杂集成
+- 依赖风险：第三方服务、外部协作
+
+## 调整要求
+- 保持原有的月度→周度→日度结构
+- 对受影响的任务进行具体调整（不要泛泛而谈）
+- 在 weekly 的 output 中明确体现策略选择的变化
+- 在 daily 的 description 中标注硬约束和风险点
+
+请严格按照JSON格式输出，不要有其他文字。"""
+
+        response = self._call_llm(
+            [
+                {"role": "system", "content": self._get_system_prompt()},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7
+        )
+
+        return self.parse_response(response, original_tasks.get('metadata', {}).get('requirement', ''), daily_hours)
+
 
 def format_output(result: dict) -> str:
     """格式化输出结果"""
@@ -292,14 +394,69 @@ def format_output(result: dict) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="Agent 6: 专业任务拆解器")
-    parser.add_argument("requirement", help="需求描述")
+    parser.add_argument("requirement", nargs='?', help="需求描述")
     parser.add_argument("--daily-hours", default="1", help="每天可用小时数（默认1）")
     parser.add_argument("--weeks", type=int, default=4, help="总周数（默认4）")
     parser.add_argument("--deadline", help="截止日期（格式：YYYY-MM-DD）")
     parser.add_argument("--json", action="store_true", help="只输出JSON格式")
     parser.add_argument("--output", help="保存到文件")
+    parser.add_argument("--regenerate", help="重新生成模式：指定已保存的任务JSON文件")
+    parser.add_argument("--answers", help="补充问题答案，格式: 'key1=value1,key2=value2'")
 
     args = parser.parse_args()
+
+    # 重新生成模式
+    if args.regenerate:
+        print(f"\n{'='*60}")
+        print(f"Agent 6: 任务优化模式（基于补充问题重新生成）")
+        print(f"{'='*60}")
+
+        # 读取已有任务
+        try:
+            with open(args.regenerate, 'r', encoding='utf-8') as f:
+                original_tasks = json.load(f)
+        except Exception as e:
+            print(f"[ERROR] 无法读取任务文件: {e}")
+            sys.exit(1)
+
+        # 解析答案
+        answers = {}
+        if args.answers:
+            for pair in args.answers.split(','):
+                if '=' in pair:
+                    key, value = pair.split('=', 1)
+                    answers[key] = value
+
+        if not answers:
+            print("[WARNING] 没有提供补充答案，将返回原始任务")
+            print(f"\n原始任务:\n{format_output(original_tasks)}")
+            return
+
+        print(f"原始任务: {args.regenerate}")
+        print(f"补充答案: {answers}")
+        print(f"{'='*60}\n")
+
+        try:
+            agent = Agent6()
+            result = agent.regenerate(original_tasks, answers, args.daily_hours)
+
+            if result:
+                output = format_output(result)
+                print("\n【优化后的任务计划】")
+                print(output)
+            else:
+                print("[ERROR] 优化失败")
+                sys.exit(1)
+        except Exception as e:
+            print(f"[ERROR] {str(e)}")
+            sys.exit(1)
+
+        return
+
+    # 正常模式
+    if not args.requirement:
+        parser.print_help()
+        sys.exit(1)
 
     # 计算周数
     total_weeks = args.weeks

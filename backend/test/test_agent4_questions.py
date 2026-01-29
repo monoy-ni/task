@@ -15,7 +15,6 @@ from openai import OpenAI
 
 load_dotenv()
 
-
 class QuestionsAgent:
     """Agent 4: 补充问题生成"""
 
@@ -75,22 +74,46 @@ class QuestionsAgent:
 
 ## 输出要求
 生成1~3个高信息增益的补充问题，遵循以下原则：
+### 🎯 个人偏好维度（挖掘学习习惯与风格）
+对哪一环节，知识点，知识面，学习方式更感兴趣
+喜欢极速还是一步一步慢慢来
+喜欢直接挑战还是喜欢先简单后难
 
+### 🧠 个人基础维度（了解能力现状与潜力）
+**探索角度**：
+- 相关经验：类似项目的成功/失败经历
+- 技能迁移：其他领域的可借鉴能力
+- 学习模式：过往最有效的学习方法
+- 资源偏好：书籍vs视频vs实操vs导师指导
+- 工具熟悉度：相关软件/平台的使用经验
+
+### ⚖️ 任务优先级维度（明确价值判断与取舍）
+**探索角度**：
+- 质量标准：哪些方面可以妥协，哪些绝不能降低要求
+- 时间分配：愿意在哪个知识点投入更多精力
+- 成果期待：理想状态vs可接受的最低标准
+
+输出规则：
 1. **高信息增益**：优先问若回答会显著改变任务结构或排程的因素
 2. **可执行性相关**：问题需围绕时间/范围/质量标准/资源/约束/依赖/风险/优先级/验收方式
 3. **避免重复**：不要问用户已经填写过的问题
-4. **低回答成本**：优先用single/multiple（给选项），只有必须时才用text
 5. **可选语气**：用户可以跳过，不要用强制性语言
 6. **保护隐私**：不要索要不必要的个人敏感信息；如必须涉及（如预算），用区间或选项
-
+7.细节：根据不同的目标，更加深入的给予用户知识点，用于询问用户对目标的具体方向，如：想要做出什么产品，学到什么程度，是否期待知识延申或者扩展
 ## 输出格式
 只返回JSON数组，不要输出解释、markdown、代码块、额外字段：
 
-[
-  {{"id": "q1", "question": "问题文本", "type": "text"}},
-  {{"id": "q2", "question": "单选问题", "type": "single", "options": ["选项1", "选项2", "选项3"]}},
-  {{"id": "q3", "question": "多选问题", "type": "multiple", "options": ["选项A", "选项B", "选项C"]}}
-]"""
+[{{
+  "id": "q1",
+  "question": "单选问题",
+  "type": "single",
+  "options": ["选项1", "选项2", "选项3"]
+}}, {{
+  "id": "q2",
+  "question": "多选问题",
+  "type": "multiple",
+  "options": ["选项A", "选项B", "选项C"]
+}}]"""
 
         print(f"\n{'='*50}")
         print(f"[Agent 4] 正在生成补充问题...")
@@ -143,31 +166,30 @@ class QuestionsAgent:
             print(f"{'='*50}\n")
             raise
 
-
 def main():
     """测试入口"""
     agent = QuestionsAgent()
 
     # 测试用例
     test_cases = [
-        {
-            "form_data": {
-                "goal": "一个月内完成博物馆网页开发",
-                "experience": "beginner",
-                "daily_hours": "2",
-                "working_days": ["周一", "周二", "周三", "周四", "周五"],
-                "importance": 4,
-                "deadline": None,
-                "blockers": "",
-                "resources": "",
-                "expectations": []
-            },
-            "analysis": {
-                "task_type": "项目开发类 - 网页开发",
-                "experience_level": "零基础 - 完全没有编程经验",
-                "time_span": "短期(1个月) - 使用周度+日度拆解"
-            }
-        },
+{
+    "form_data": {
+        "goal": "六个月内学会Python爬虫+数据分析，能独立做电商数据爬取项目",
+        "experience": "advanced_beginner",  # 入门级（会基础语法，不会框架）
+        "daily_hours": "2-3",  # 灵活时长（工作日2h，周末3h）
+        "working_days": ["周一", "周二", "周四", "周五", "周日"],
+        "importance": 4,
+        "deadline": "2026-09-30",
+        "blockers": "工作日晚上易被加班打断，无系统学习路径",
+        "resources": "《Python爬虫实战》书籍、Anaconda环境、jupyter notebook",
+        "expectations": ["分阶段学（爬虫→数据分析→项目）", "每周留1天做实战练习"]
+    },
+    "analysis": {
+        "task_type": "技能学习类 - 编程技能进阶",
+        "experience_level": "入门基础 - 掌握核心语法，无框架/项目经验",
+        "time_span": "中期(6个月) - 使用月度+周度拆解，日度做细化"
+    }
+},
     ]
 
     print("\n" + "="*50)
@@ -182,7 +204,6 @@ def main():
     print("\n" + "="*50)
     print("测试完成")
     print("="*50)
-
 
 if __name__ == "__main__":
     main()

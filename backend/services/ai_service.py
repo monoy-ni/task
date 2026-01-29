@@ -79,11 +79,17 @@ class AIService:
         for attempt in range(max_retries):
             try:
                 print(f"[DEBUG] 调用 AI 模型: {model} (尝试 {attempt + 1}/{max_retries})")  # 调试
+                # 根据模型类型设置不同的 max_tokens
+                # Thinking 模型可能需要更多 tokens
+                if "Thinking" in model or "thinking" in model:
+                    max_t = 16384
+                else:
+                    max_t = 8192
                 response = self.client.chat.completions.create(
                     model=model,
                     messages=messages,
                     temperature=temperature,
-                    max_tokens=4096,
+                    max_tokens=max_t,
                     timeout=timeout_val,
                 )
                 print(f"[DEBUG] AI 响应成功")  # 调试
@@ -250,13 +256,42 @@ class AIService:
         return response.strip().split('\n')[0][:100]
 
     # ==================== Agent 4: 补充问题生成 ====================
-    def _agent_questions(self, form_data: Dict[str, Any], analysis: Dict[str, str]) -> list:
-        """Agent 4: 生成补充问题（基于表单信息和分析结果）"""
+    def _agent_questions(self, form_data: Dict[str, Any], analysis: Dict[str, str], previous_questions: list = None) -> list:
+        """Agent 4: 生成补充问题（基于表单信息和分析结果）
+
+        Args:
+            form_data: 表单数据
+            analysis: AI分析结果
+            previous_questions: 之前生成的问题列表（用于避免重复）
+
+        Returns:
+            补充问题列表
+        """
         experience_map = {
             "beginner": "初学者",
             "intermediate": "进阶者",
             "expert": "精通者"
         }
+
+        # 检查哪些信息已有，避免重复提问
+        has_deadline = bool(form_data.get('deadline'))
+        has_daily_hours = bool(form_data.get('daily_hours'))
+        has_blockers = bool(form_data.get('blockers') and form_data.get('blockers') != '无')
+        has_resources = bool(form_data.get('resources') and form_data.get('resources') != '无')
+
+        # 构建之前问题的摘要（如果有）
+        previous_questions_text = ""
+        if previous_questions and len(previous_questions) > 0:
+            prev_q_list = []
+            for q in previous_questions:
+                q_text = q.get('question', '')
+                # 如果用户已经回答了这个问题，也包括答案
+                # 这里我们只需要问题文本来避免重复
+                prev_q_list.append(f"- {q_text}")
+            previous_questions_text = f"""
+## 已问过的问题（请避免重复或高度相似）
+{chr(10).join(prev_q_list)}
+"""
 
         prompt = f"""你是补充问题生成器（Follow-up Question Agent）。
 
@@ -284,25 +319,40 @@ class AIService:
     "time_span": "{analysis.get('time_span', '')}"
   }}
 }}
-
+{previous_questions_text}
 ## 输出要求
 生成1~3个高信息增益的补充问题，遵循以下原则：
+### 🎯 个人偏好维度（挖掘学习习惯与风格）
+对哪一环节，知识点，知识面，学习方式更感兴趣
+喜欢极速还是一步一步慢慢来
+喜欢直接挑战还是喜欢先简单后难
 
+### 🧠 个人基础维度（了解能力现状与潜力）
+**探索角度**：
+- 相关经验：类似项目的成功/失败经历
+- 技能迁移：其他领域的可借鉴能力
+- 学习模式：过往最有效的学习方法
+- 资源偏好：书籍vs视频vs实操vs导师指导
+- 工具熟悉度：相关软件/平台的使用经验
+
+### ⚖️ 任务优先级维度（明确价值判断与取舍）
+**探索角度**：
+- 质量标准：哪些方面可以妥协，哪些绝不能降低要求
+- 时间分配：愿意在哪个知识点投入更多精力
+- 成果期待：理想状态vs可接受的最低标准
+
+输出规则：
 1. **高信息增益**：优先问若回答会显著改变任务结构或排程的因素
 2. **可执行性相关**：问题需围绕时间/范围/质量标准/资源/约束/依赖/风险/优先级/验收方式
 3. **避免重复**：不要问用户已经填写过的问题
-4. **低回答成本**：优先用single/multiple（给选项），只有必须时才用text
 5. **可选语气**：用户可以跳过，不要用强制性语言
 6. **保护隐私**：不要索要不必要的个人敏感信息；如必须涉及（如预算），用区间或选项
+7. 细节：根据不同的目标，更加深入的给予用户知识点，用于询问用户对目标的具体方向，如：想要做出什么产品，学到什么程度，是否期待知识延申或者扩展
 
 ## 输出格式
 只返回JSON数组，不要输出解释、markdown、代码块、额外字段：
 
-[
-  {{"id": "q1", "question": "问题文本", "type": "text"}},
-  {{"id": "q2", "question": "单选问题", "type": "single", "options": ["选项1", "选项2", "选项3"]}},
-  {{"id": "q3", "question": "多选问题", "type": "multiple", "options": ["选项A", "选项B", "选项C"]}}
-]"""
+[{{"id": "q1", "question": "单选问题", "type": "single", "options": ["选项1", "选项2", "选项3"]}}, {{"id": "q2", "question": "多选问题", "type": "multiple", "options": ["选项A", "选项B", "选项C"]}}]"""
         response = self._call_llm([{"role": "user", "content": prompt}], temperature=0.7, model=self.model_generation)
         # 提取JSON
         if "```json" in response:
@@ -318,12 +368,84 @@ class AIService:
             result = json.loads(response)
             # 兼容不同的返回格式
             if isinstance(result, dict) and "follow_up_questions" in result:
-                return result["follow_up_questions"]
+                result = result["follow_up_questions"]
             if isinstance(result, list):
+                # 确保每个问题都有category字段
+                result = self._ensure_category_fields(result)
                 return result
-            return [{"id": "q1", "question": "你的具体期望是什么？", "type": "text"}]
-        except:
-            return [{"id": "q1", "question": "你的具体期望是什么？", "type": "text"}]
+            return self._get_default_questions()
+        except Exception as e:
+            print(f"[ERROR] 解析补充问题失败: {e}")
+            return self._get_default_questions()
+
+    def _ensure_category_fields(self, questions: list) -> list:
+        """确保每个问题都有category字段，基于问题内容智能推断"""
+        # 定义关键词映射（新三个维度）
+        preference_keywords = [
+            '学习', '方式', '偏好', '喜欢', '倾向', '风格', '习惯',
+            '极速', '慢慢', '挑战', '简单', '难度', '兴趣', '环节', '知识点'
+        ]
+        foundation_keywords = [
+            '经验', '基础', '能力', '技能', '迁移', '模式', '有效',
+            '资源', '书籍', '视频', '实操', '导师', '工具', '平台', '类似', '项目'
+        ]
+        priority_keywords = [
+            '优先级', '质量', '标准', '妥协', '要求', '时间', '分配',
+            '精力', '成果', '期待', '理想', '最低', '交付', '完成', '快速', '打磨'
+        ]
+
+        for q in questions:
+            if 'category' not in q or not q['category']:
+                question_text = q.get('question', '').lower()
+
+                # 基于关键词判断类别
+                category = 'priority'  # 默认任务优先级
+                if any(kw in question_text for kw in preference_keywords):
+                    category = 'preference'
+                elif any(kw in question_text for kw in foundation_keywords):
+                    category = 'foundation'
+                elif any(kw in question_text for kw in priority_keywords):
+                    category = 'priority'
+
+                q['category'] = category
+
+        # 确保三个维度都有覆盖（如果问题数量>=3）
+        if len(questions) >= 3:
+            categories = [q.get('category', 'priority') for q in questions]
+            if 'preference' not in categories:
+                questions[0]['category'] = 'preference'
+            if 'foundation' not in categories:
+                questions[1]['category'] = 'foundation'
+            if 'priority' not in categories:
+                questions[2]['category'] = 'priority'
+
+        return questions
+
+    def _get_default_questions(self) -> list:
+        """获取默认的补充问题（涵盖三个维度）"""
+        return [
+            {
+                "id": "q1",
+                "category": "preference",
+                "question": "你更倾向于哪种学习方式？",
+                "type": "single",
+                "options": ["理论先行再实践", "边做边学", "先模仿再创造"]
+            },
+            {
+                "id": "q2",
+                "category": "foundation",
+                "question": "你之前有类似项目的经验吗？",
+                "type": "single",
+                "options": ["完全没有", "有一些了解", "做过类似项目"]
+            },
+            {
+                "id": "q3",
+                "category": "priority",
+                "question": "你对成果的期待是？",
+                "type": "single",
+                "options": ["快速出可用的成果", "质量优先慢慢打磨", "在保证质量的前提下尽快完成"]
+            }
+        ]
 
     # ==================== Agent 6: 专业任务拆解器 ====================
     def _agent_breakdown(self, form_data: Dict[str, Any], analysis: Dict[str, str]) -> Dict[str, Any]:
@@ -486,34 +608,93 @@ class AIService:
 
     def _parse_breakdown_response(self, response: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """解析任务拆解响应"""
-        print(f"[DEBUG] 解析任务拆解响应，响应长度: {len(response)} 字符")
+        print(f"\n[DEBUG] ============ 解析任务拆解响应 ============")
+        print(f"[DEBUG] 响应长度: {len(response)} 字符")
+
+        # 打印原始响应的前500个字符用于调试
+        print(f"[DEBUG] 响应内容预览: {response[:500]}")
+
         response = response.strip()
 
         # 提取JSON
         if "```json" in response:
             start = response.find("```json") + 7
-            end = response.rfind("```")
-            response = response[start:end].strip()
+            # 找到这个代码块之后的 ```
+            end = response.find("```", start)
+            if end != -1:
+                response = response[start:end].strip()
+                print(f"[DEBUG] 提取了 ```json 代码块，长度: {len(response)}")
+            else:
+                # 没有找到结束标记，可能是响应被截断
+                response = response[start:].strip()
+                print(f"[DEBUG] 提取了 ```json 代码块（无结束标记，响应可能被截断），长度: {len(response)}")
         elif "```" in response:
             start = response.find("```") + 3
-            end = response.rfind("```")
-            response = response[start:end].strip()
+            end = response.find("```", start)
+            if end != -1:
+                response = response[start:end].strip()
+                print(f"[DEBUG] 提取了 ``` 代码块")
+            else:
+                response = response[start:].strip()
+                print(f"[DEBUG] 提取了 ``` 代码块（无结束标记），长度: {len(response)}")
 
+        # 如果响应过短，可能解析会失败
+        if len(response) < 100:
+            print(f"[WARNING] 提取后的响应过短: {len(response)} 字符")
+            print(f"[DEBUG] 响应内容: {response}")
+            print(f"[DEBUG] 使用 fallback 任务结构")
+            return self._get_fallback_tasks(form_data)
+
+        # 尝试修复截断的JSON
         try:
             result = json.loads(response)
-
-            # 将Agent6格式转换为前端期望的格式
-            converted = self._convert_agent6_format(result)
-            return converted
         except json.JSONDecodeError as e:
-            print(f"[ERROR] JSON解析失败: {e}")
-            print(f"[ERROR] 响应内容:\n{response[:500]}")
-            # 解析失败，使用备用结构
-            return self._get_fallback_tasks(form_data)
+            print(f"[WARNING] JSON解析失败，尝试修复截断的JSON: {e}")
+            # 尝试修复：统计未闭合的括号并补全
+            response_fixed = self._fix_truncated_json(response)
+            if response_fixed:
+                try:
+                    result = json.loads(response_fixed)
+                    print(f"[DEBUG] JSON修复成功")
+                except:
+                    print(f"[DEBUG] JSON修复失败，使用 fallback")
+                    return self._get_fallback_tasks(form_data)
+            else:
+                print(f"[DEBUG] 无法修复截断的JSON，使用 fallback")
+                return self._get_fallback_tasks(form_data)
+
+        # 解析成功，打印调试信息并转换
+        print(f"[DEBUG] JSON解析成功，keys: {list(result.keys()) if isinstance(result, dict) else type(result)}")
+
+        # 打印monthly/weekly/daily的内容
+        if isinstance(result, dict):
+            if 'monthly' in result:
+                print(f"[DEBUG] monthly keys: {list(result.get('monthly', {}).keys())}")
+            if 'weekly' in result:
+                print(f"[DEBUG] weekly keys: {list(result.get('weekly', {}).keys())}")
+            if 'daily' in result:
+                print(f"[DEBUG] daily keys: {list(result.get('daily', {}).keys())}")
+
+        # 将Agent6格式转换为前端期望的格式
+        print(f"[DEBUG] 开始转换 Agent6 格式...")
+        converted = self._convert_agent6_format(result)
+        print(f"[DEBUG] _parse_breakdown_response 转换后的daily keys: {list(converted.get('daily', {}).keys())}")
+        print(f"[DEBUG] _parse_breakdown_response 转换后的weekly keys: {list(converted.get('weekly', {}).keys())}")
+        print(f"[DEBUG] _parse_breakdown_response 转换后的monthly keys: {list(converted.get('monthly', {}).keys())}")
+        print(f"[DEBUG] ============ 解析完成 ============\n")
+        return converted
 
     def _convert_agent6_format(self, agent6_result: Dict[str, Any]) -> Dict[str, Any]:
         """将Agent6格式转换为前端期望的嵌套格式"""
         from datetime import datetime, timedelta
+
+        print(f"[DEBUG] _convert_agent6_format 输入keys: {list(agent6_result.keys())}")
+        print(f"[DEBUG] _convert_agent6_format 输入内容: {str(agent6_result)[:1000]}")
+
+        # 如果已经是前端格式，直接返回
+        if all(key in agent6_result for key in ['yearly', 'quarterly', 'monthly', 'weekly', 'daily']):
+            print(f"[DEBUG] 检测到前端格式，直接返回")
+            return agent6_result
 
         converted = {
             "yearly": [],
@@ -525,67 +706,204 @@ class AIService:
 
         # 处理monthly
         monthly = agent6_result.get('monthly', {})
-        for month_key, month_info in monthly.items():
-            # 生成月度任务列表
-            month_tasks = [{
-                "id": f"m-{month_key}",
-                "title": month_info.get('goal', month_key),
-                "description": month_info.get('output', ''),
-                "estimated_hours": 40
-            }]
-            converted["monthly"][month_key] = month_tasks
+        print(f"[DEBUG] monthly类型: {type(monthly)}, 内容: {str(monthly)[:200]}")
+        if isinstance(monthly, dict):
+            for month_key, month_info in monthly.items():
+                # 生成月度任务列表
+                if isinstance(month_info, dict):
+                    title = month_info.get('goal', month_key)
+                    description = month_info.get('output', '')
+                elif isinstance(month_info, list):
+                    # 已经是前端格式列表
+                    converted["monthly"][month_key] = month_info
+                    continue
+                else:
+                    title = str(month_info)
+                    description = ''
+                month_tasks = [{
+                    "id": f"m-{month_key}",
+                    "title": title,
+                    "description": description,
+                    "estimated_hours": 40
+                }]
+                converted["monthly"][month_key] = month_tasks
 
-        # 处理weekly - 转换为"第X个月 - 第Y周"格式
+        # 处理weekly
         weekly = agent6_result.get('weekly', {})
-        for week_key, week_info in weekly.items():
-            # 简单的周key，如"第1周"
-            week_tasks = [{
-                "id": f"w-{week_key}",
-                "title": week_info.get('goal', week_key),
-                "description": week_info.get('output', ''),
-                "estimated_hours": 10
-            }]
-            converted["weekly"][week_key] = week_tasks
+        print(f"[DEBUG] weekly类型: {type(weekly)}, 内容: {str(weekly)[:200]}")
+        if isinstance(weekly, dict):
+            for week_key, week_info in weekly.items():
+                if isinstance(week_info, dict):
+                    title = week_info.get('goal', week_key)
+                    description = week_info.get('output', '')
+                elif isinstance(week_info, list):
+                    # 已经是前端格式列表
+                    converted["weekly"][week_key] = week_info
+                    continue
+                else:
+                    title = str(week_info)
+                    description = ''
+                week_tasks = [{
+                    "id": f"w-{week_key}",
+                    "title": title,
+                    "description": description,
+                    "estimated_hours": 10
+                }]
+                converted["weekly"][week_key] = week_tasks
 
         # 处理daily - 转换为嵌套结构
         daily = agent6_result.get('daily', {})
+        print(f"[DEBUG] daily类型: {type(daily)}, 内容: {str(daily)[:300]}")
         current_date = datetime.now()
 
-        for week_key, week_days in daily.items():
-            # 提取周数，如"第1周" -> 1
-            week_num = 1
-            for num in range(1, 10):
-                if f"第{num}周" in week_key:
-                    week_num = num
-                    break
+        if isinstance(daily, dict):
+            for week_key, week_days in daily.items():
+                # 提取周数，如"第1周" -> 1
+                week_num = 1
+                for num in range(1, 10):
+                    if f"第{num}周" in week_key:
+                        week_num = num
+                        break
 
-            # 创建周级别的daily结构
-            week_daily_data = {}
-            day_offset = 0
+                # 创建周级别的daily结构
+                week_daily_data = {}
+                day_offset = 0
 
-            for day_key, day_task in week_days.items():
-                # 计算实际日期
-                target_date = current_date + timedelta(days=(week_num - 1) * 7 + day_offset)
-                date_str = f"{target_date.month}月{target_date.day}日"
+                if isinstance(week_days, dict):
+                    for day_key, day_task in week_days.items():
+                        # 计算实际日期
+                        target_date = current_date + timedelta(days=(week_num - 1) * 7 + day_offset)
+                        date_str = f"{target_date.month}月{target_date.day}日"
 
-                # 转换任务格式
-                task_list = [{
-                    "id": f"d-{week_key}-{day_key}",
-                    "title": day_task.get('title', ''),
-                    "description": day_task.get('description', ''),
-                    "output": day_task.get('output', ''),
-                    "estimated_hours": day_task.get('hours', 1)
-                }]
+                        # 转换任务格式
+                        if isinstance(day_task, dict):
+                            task_list = [{
+                                "id": f"d-{week_key}-{day_key}",
+                                "title": day_task.get('title', ''),
+                                "description": day_task.get('description', ''),
+                                "output": day_task.get('output', ''),
+                                "estimated_hours": day_task.get('hours', 1)
+                            }]
+                        elif isinstance(day_task, list):
+                            # 已经是前端格式列表
+                            task_list = day_task
+                        else:
+                            task_list = [{
+                                "id": f"d-{week_key}-{day_key}",
+                                "title": str(day_task),
+                                "description": '',
+                                "output": '',
+                                "estimated_hours": 1
+                            }]
 
-                week_daily_data[date_str] = task_list
-                day_offset += 1
+                        week_daily_data[date_str] = task_list
+                        day_offset += 1
 
-            # 使用"第X个月-第X周"作为key
-            month_num = (week_num - 1) // 4 + 1
-            nested_key = f"第{month_num}个月-第{week_num}周"
-            converted["daily"][nested_key] = week_daily_data
+                    # 使用"第X个月-第X周"作为key
+                    month_num = (week_num - 1) // 4 + 1
+                    nested_key = f"第{month_num}个月-第{week_num}周"
+                    converted["daily"][nested_key] = week_daily_data
+                elif isinstance(week_days, list):
+                    # 已经是前端格式的列表结构 {"第1天": [tasks]}
+                    # 需要转换为嵌套结构
+                    week_daily_data = {}
+                    day_idx = 0
+                    for day_task in week_days:
+                        target_date = current_date + timedelta(days=(week_num - 1) * 7 + day_idx)
+                        date_str = f"{target_date.month}月{target_date.day}日"
+                        if isinstance(day_task, list):
+                            week_daily_data[date_str] = day_task
+                        else:
+                            week_daily_data[date_str] = [day_task]
+                        day_idx += 1
+
+                    month_num = (week_num - 1) // 4 + 1
+                    nested_key = f"第{month_num}个月-第{week_num}周"
+                    converted["daily"][nested_key] = week_daily_data
+
+        print(f"[DEBUG] _convert_agent6_format 转换完成")
+        print(f"[DEBUG] 转换后的monthly: {list(converted['monthly'].keys())}")
+        print(f"[DEBUG] 转换后的weekly: {list(converted['weekly'].keys())}")
+        print(f"[DEBUG] 转换后的daily: {list(converted['daily'].keys())}")
+
+        # 检查是否有实际内容，如果没有则返回None表示需要fallback
+        has_content = (
+            len(converted["monthly"]) > 0 or
+            len(converted["weekly"]) > 0 or
+            len(converted["daily"]) > 0
+        )
+
+        if not has_content:
+            print(f"[ERROR] _convert_agent6_format 转换后无内容")
+            raise ValueError("转换后的任务结构为空，无法生成有效任务")
 
         return converted
+
+    def _fix_truncated_json(self, json_str: str) -> str:
+        """尝试修复截断的JSON字符串"""
+        if not json_str or len(json_str.strip()) < 10:
+            return None
+
+        json_str = json_str.strip()
+
+        # 统计括号，补全未闭合的部分
+        open_braces = json_str.count('{') - json_str.count('}')
+        open_brackets = json_str.count('[') - json_str.count(']')
+
+        if open_braces > 0 or open_brackets > 0:
+            print(f"[DEBUG] 检测到截断的JSON: 缺少 {open_braces} 个 }} 和 {open_brackets} 个 ]")
+            # 补全括号
+            fixed = json_str + '}' * open_braces + ']' * open_brackets
+            try:
+                json.loads(fixed)
+                print(f"[DEBUG] JSON修复成功，补全了 {open_braces} 个 }} 和 {open_brackets} 个 ]")
+                return fixed
+            except:
+                pass
+
+        # 如果直接修复失败，尝试找到最后一个完整的对象
+        # 找到所有完整的顶层键
+        lines = json_str.split('\n')
+        fixed_lines = []
+        depth = 0
+        in_string = False
+        escape_next = False
+
+        for line in lines:
+            i = 0
+            while i < len(line):
+                char = line[i]
+                if escape_next:
+                    escape_next = False
+                elif char == '\\' and in_string:
+                    escape_next = True
+                elif char == '"' and not escape_next:
+                    in_string = not in_string
+                elif not in_string:
+                    if char == '{' or char == '[':
+                        depth += 1
+                    elif char == '}' or char == ']':
+                        depth -= 1
+                i += 1
+            fixed_lines.append(line)
+            # 当回到顶层且遇到闭合括号时停止
+            if depth == 0 and ('}' in line or ']' in line):
+                # 检查这行是否是顶层闭合
+                if line.rstrip().endswith('}') or line.rstrip().endswith(']'):
+                    break
+
+        fixed = '\n'.join(fixed_lines)
+        # 确保以正确的括号结束
+        if not fixed.rstrip().endswith('}'):
+            fixed += '\n}'
+
+        try:
+            json.loads(fixed)
+            print(f"[DEBUG] JSON截断修复成功")
+            return fixed
+        except:
+            print(f"[DEBUG] 无法修复截断的JSON")
+            return None
 
     def _get_fallback_tasks(self, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """备用任务结构"""
@@ -883,56 +1201,179 @@ class AIService:
         form_data: Dict[str, Any],
         answers: Dict[str, Any],
         previous_tasks: Dict[str, Any],
-        analysis: Dict[str, str] = None
+        analysis: Dict[str, str] = None,
+        previous_questions: list = None
     ) -> Dict[str, Any]:
-        """根据补充问题的答案重新生成任务"""
+        """根据补充问题的答案重新生成任务（基于已有任务结构进行优化）
 
+        Args:
+            form_data: 原始表单数据
+            answers: 用户对补充问题的答案
+            previous_tasks: 之前的任务结构
+            analysis: AI分析结果
+            previous_questions: 之前生成的补充问题列表（用于避免重复）
+
+        Returns:
+            包含新任务和新补充问题的字典
+        """
+
+        # 构建已有任务摘要
+        monthly_summary = []
+        monthly_tasks = previous_tasks.get('monthly', {})
+        for month, info in monthly_tasks.items():
+            if isinstance(info, list) and len(info) > 0:
+                # 前端格式: [{"title": "", "description": ""}]
+                monthly_summary.append(f"- {month}: {info[0].get('title', '')}")
+            elif isinstance(info, dict):
+                # Agent6 原始格式: {"goal": "", "output": ""}
+                monthly_summary.append(f"- {month}: {info.get('goal', '')}")
+
+        weekly_summary = []
+        weekly_tasks = previous_tasks.get('weekly', {})
+        for week, info in weekly_tasks.items():
+            if isinstance(info, list) and len(info) > 0:
+                weekly_summary.append(f"- {week}: {info[0].get('title', '')}")
+            elif isinstance(info, dict):
+                weekly_summary.append(f"- {week}: {info.get('goal', '')}")
+
+        daily_summary = []
+        daily_tasks = previous_tasks.get('daily', {})
+        for week, days in list(daily_tasks.items())[:4]:  # 只显示前4周
+            if isinstance(days, dict):
+                # 嵌套格式: {"第1个月-第1周": {"1月1日": [tasks]}}
+                day_count = len(days)
+            elif isinstance(days, list):
+                # 简单格式
+                day_count = len(days)
+            else:
+                day_count = 0
+            daily_summary.append(f"- {week}: {day_count}天任务")
+
+        # 构建补充信息文本
         answers_text = "\n".join([
             f"- {key}: {value}"
             for key, value in answers.items()
             if value
         ])
 
-        # 重新生成任务（使用新的breakdown prompt）
-        breakdown_prompt = self._build_breakdown_prompt(form_data, analysis or {})
-        breakdown_prompt += f"""
+        # 构建优化提示（匹配 test_agent6.py 的 regenerate 逻辑）
+        prompt = f"""请根据用户的补充信息，重新生成完整的任务计划：
 
-## 用户补充信息
+## 用户原始需求
+{form_data.get('goal', '')}
+
+## AI分析结果
+- 任务类型：{analysis.get('task_type', '') if analysis else ''}
+- 经验水平：{analysis.get('experience_level', '') if analysis else ''}
+- 时间跨度：{analysis.get('time_span', '') if analysis else ''}
+
+## 原始任务计划摘要
+
+月度任务:
+{chr(10).join(monthly_summary[:6]) if monthly_summary else '- 无'}
+
+周度任务:
+{chr(10).join(weekly_summary[:8]) if weekly_summary else '- 无'}
+
+日度任务:
+{chr(10).join(daily_summary) if daily_summary else '- 无'}
+
+## 用户补充信息（用于优化任务）
+
 {answers_text}
 
-请根据这些补充信息，重新调整和优化任务拆解，使其更符合用户的具体情况。"""
+## 输出要求
+
+请重新生成一个**完整的**任务拆解计划，包含所有月份、所有周、所有天的任务。
+
+**必须严格按照以下JSON格式输出：**
+
+```json
+{{
+  "project_name": "项目名称",
+  "overview": "项目概述（1-2句话）",
+  "monthly": {{
+    "第1个月": {{
+      "goal": "月度目标概述",
+      "output": "该月的最终产出",
+      "weeks": ["第1周", "第2周", "第3周", "第4周"]
+    }}
+  }},
+  "weekly": {{
+    "第1周": {{
+      "goal": "本周目标",
+      "output": "产出：本周明确产出",
+      "focus": "本周重点领域"
+    }},
+    "第2周": {{
+      "goal": "周度目标",
+      "output": "产出：...",
+      "focus": "..."
+    }}
+    // ... 所有周
+  }},
+  "daily": {{
+    "第1周": {{
+      "Day1": {{
+        "title": "任务标题",
+        "description": "具体任务描述",
+        "hours": 1,
+        "output": "产出：明确产出"
+      }},
+      "Day2": {{ ... }},
+      // ... Day3-Day7
+    }},
+    "第2周": {{ ... }},
+    // ... 所有周
+  }}
+}}
+```
+
+## 重要提示
+
+1. **必须输出完整结构**：包含所有月份、所有周（通常4周）、每周7天
+2. **每周最后一天是"机动日"**：用于查漏补缺
+3. **每个任务都有明确产出**：用"产出："开头描述
+4. **根据补充信息调整**：考虑用户的硬约束、策略偏好、验收标准等
+
+请严格按照上述JSON格式输出完整的任务计划，不要省略任何内容。"""
+
+        print(f"[DEBUG] regenerate_with_answers prompt 长度: {len(prompt)}")
 
         response = self._call_llm(
             [{"role": "system", "content": self._get_breakdown_system_prompt()},
-             {"role": "user", "content": breakdown_prompt}],
+             {"role": "user", "content": prompt}],
             temperature=0.7,
             model=self.model_generation
         )
 
+        print(f"[DEBUG] regenerate_with_answers LLM 响应长度: {len(response) if response else 0}")
+        if not response or len(response.strip()) < 100:
+            print(f"[WARNING] regenerate_with_answers LLM 响应过短或为空!")
+            print(f"[DEBUG] 响应内容: {response}")
+
         # 解析任务
-        result = self._parse_breakdown_response(response, form_data)
+        tasks = self._parse_breakdown_response(response, form_data)
 
-        # 重新生成补充问题（基于答案）
-        # 构建包含答案的表单数据
-        updated_form_data = form_data.copy()
-        # 将答案信息添加到表单中，用于生成新的补充问题
-        context_additions = []
-        for q_id, answer in answers.items():
-            if answer:
-                if isinstance(answer, list):
-                    context_additions.append(f"补充问题{q_id}的答案: {', '.join(answer)}")
-                else:
-                    context_additions.append(f"补充问题{q_id}的答案: {answer}")
-
-        if context_additions:
-            # 重新调用Agent 4生成新的补充问题
+        # 重新生成补充问题（基于答案，避免重复之前的问题）
+        try:
             new_questions = self._agent_questions(
-                form_data=updated_form_data,
-                analysis=analysis or {}
+                form_data=form_data,
+                analysis=analysis or {},
+                previous_questions=previous_questions
             )
-            result["follow_up_questions"] = new_questions
+        except Exception as e:
+            print(f"[ERROR] 重新生成补充问题失败: {e}")
+            import traceback
+            traceback.print_exc()
+            # 补充问题生成失败时，使用默认问题或空列表
+            new_questions = self._get_default_questions()
 
-        return result
+        # 返回与 generate_task_breakdown 相同的结构
+        return {
+            "tasks": tasks,
+            "follow_up_questions": new_questions
+        }
 
 
 # 单例
