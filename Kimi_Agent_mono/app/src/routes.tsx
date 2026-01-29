@@ -9,6 +9,7 @@ import DailyTasksTimeline from "./pages/DailyTasksTimeline";
 import ProjectDashboard from "./pages/ProjectDashboard";
 import Review from "./pages/Review";
 import History from "./pages/History";
+import About from "./pages/About";
 import NotFound from "./pages/NotFound";
 
 export const router = createBrowserRouter([
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       { path: "create", Component: CreateProject },
       { path: "task-breakdown", Component: TaskBreakdown },
       { path: "test-breakdown", Component: TestBreakdown },
+      { path: "about", Component: About },
       { path: "history", Component: History },
       { path: "dashboard/:projectId", Component: ProjectDashboard },
       { path: "plan/:projectId", Component: GanttView },
