@@ -7,9 +7,9 @@ const testimonials = [
     role: '考研学生',
     avatar: '林',
     content:
-      '备考期间用 mono 规划复习计划，AI 拆解的任务清单让我不再焦虑。每天知道该做什么，效率提升了很多！',
+      '备考期间很焦虑，不知道每天该学什么。mono 把复习计划拆成每天的小任务，我只需要完成今天的任务，一步一步就走到了考场，最后成功上岸。',
     rating: 5,
-    tag: '学生备考',
+    tag: '目标达成',
   },
   {
     id: 2,
@@ -17,9 +17,9 @@ const testimonials = [
     role: '独立开发者',
     avatar: '杰',
     content:
-      '作为自由职业者，时间管理一直是痛点。mono 的四象限优先级帮我聚焦重要任务，不再被琐事淹没。',
+      '想做一个独立项目，但面对宏大的想法一直拖延。mono 把我的大目标拆成一个个能完成的小功能，每完成一个就很有成就感，3个月后真的上线了。',
     rating: 5,
-    tag: '创作者',
+    tag: '目标达成',
   },
   {
     id: 3,
@@ -27,19 +27,19 @@ const testimonials = [
     role: '产品经理',
     avatar: '婷',
     content:
-      '项目推进用 mono 做规划，甘特图可视化进度，AI 的建议帮我及时发现风险并调整计划。',
+      '想学习新技能但总是半途而废。mono 让我专注于今天的小任务，而不是被遥远的终点吓退。坚持了半年，现在真的掌握了这项技能。',
     rating: 5,
-    tag: '项目推进',
+    tag: '目标达成',
   },
   {
     id: 4,
     name: '浩然',
-    role: '自律爱好者',
+    role: '转行者',
     avatar: '浩',
     content:
-      '每日复盘功能太棒了！自动重排计划让我不再为没完成任务而自责，而是持续优化下一轮。',
+      '想转行但不知道从哪开始。mono 帮我规划了学习路径，把转行这个大目标变成了每天能完成的小任务。现在已经在新的岗位上工作了。',
     rating: 5,
-    tag: '自我管理者',
+    tag: '目标达成',
   },
   {
     id: 5,
@@ -47,9 +47,9 @@ const testimonials = [
     role: '设计师',
     avatar: '雯',
     content:
-      '界面简洁治愈，吉祥物 mono 超可爱！用起来心情很好，坚持计划也变得更轻松了。',
+      '一直想建立作品集但总是拖延。mono 把这个目标拆成每周完成一个小项目，压力小了很多，现在作品集已经完成了。',
     rating: 5,
-    tag: '创作者',
+    tag: '目标达成',
   },
 ];
 
@@ -109,14 +109,14 @@ const Testimonials = () => {
           <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-soft mb-6">
             <span className="w-2 h-2 bg-mono-primary rounded-full"></span>
             <span className="text-sm font-medium text-mono-text-secondary">
-              用户评价
+              用户故事
             </span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-mono-text mb-4">
-            他们都在用 <span className="text-gradient">mono</span>
+            和你一样的人，<span className="text-gradient">都实现了目标</span>
           </h2>
           <p className="text-lg text-mono-text-secondary max-w-2xl mx-auto">
-            来自不同领域用户的真实反馈
+            有目标但不知从何开始？看看他们是如何一步步走到终点的
           </p>
         </div>
 

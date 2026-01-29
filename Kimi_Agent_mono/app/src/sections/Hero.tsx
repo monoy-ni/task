@@ -100,14 +100,14 @@ const Hero = () => {
             >
               <span className="w-2 h-2 bg-mono-primary rounded-full animate-pulse"></span>
               <span className="text-sm font-medium text-mono-text-secondary">
-                AI 驱动的任务管理
+                给有目标但不知从何开始的人
               </span>
             </div>
 
             {/* Headline */}
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-mono-text leading-tight">
-              像呼吸一样自然的
-              <span className="text-gradient block mt-2">任务管理</span>
+              把你的大目标，变成
+              <span className="text-gradient block mt-2">一步步可走的路</span>
             </h1>
 
             {/* Description */}
@@ -116,8 +116,8 @@ const Hero = () => {
                 isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
               }`}
             >
-              mono 帮助你轻松组织生活，将宏大目标分解为可执行的小任务，
-              智能规划每一天，让计划变动不再成为困扰。
+              有目标但不知从何开始？mono 用 AI 把你的大目标拆解成每天的小任务，
+              让你只需要关心今天，目标自然会到达。
             </p>
 
             {/* CTA Buttons */}
@@ -145,21 +145,21 @@ const Hero = () => {
                 <div className="font-display text-3xl font-bold text-mono-primary">
                   10K+
                 </div>
-                <div className="text-sm text-mono-text-muted">活跃用户</div>
+                <div className="text-sm text-mono-text-muted">目标在推进</div>
               </div>
               <div className="w-px bg-mono-border" />
               <div>
                 <div className="font-display text-3xl font-bold text-mono-primary">
-                  98%
+                  85%
                 </div>
-                <div className="text-sm text-mono-text-muted">满意度</div>
+                <div className="text-sm text-mono-text-muted">达成率提升</div>
               </div>
               <div className="w-px bg-mono-border" />
               <div>
                 <div className="font-display text-3xl font-bold text-mono-primary">
-                  50M+
+                  50K+
                 </div>
-                <div className="text-sm text-mono-text-muted">完成任务</div>
+                <div className="text-sm text-mono-text-muted">大目标拆解</div>
               </div>
             </div>
           </div>

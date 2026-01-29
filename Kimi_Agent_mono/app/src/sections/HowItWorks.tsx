@@ -4,23 +4,23 @@ import { useNavigate } from 'react-router';
 const steps = [
   {
     number: '01',
-    title: '设定目标',
-    description: '填写你的目标，无论是备考、项目还是习惯养成，mono 都能理解',
+    title: '说出你的目标',
+    description: '简单描述你想达成的事情，mono 会听懂并帮你梳理关键信息',
   },
   {
     number: '02',
-    title: 'AI 拆解',
-    description: 'AI 一键生成完整的任务清单，从月度到日度，层层递进',
+    title: 'AI 拆成小任务',
+    description: 'AI 把大目标分解成月度、周度、日度的小任务，告诉你第一步做什么',
   },
   {
     number: '03',
-    title: '每日执行',
-    description: '按四象限优先级完成任务，甘特图可视化你的进度',
+    title: '完成今天的事',
+    description: '每天只需要完成3-5件小事，做完它们，你就离目标近了一步',
   },
   {
     number: '04',
-    title: '复盘优化',
-    description: '每日自动复盘，AI 智能重排计划，持续优化你的执行路径',
+    title: '一天天走到终点',
+    description: '计划被打乱也没关系，AI 会帮你调整，继续往前走就好',
   },
 ];
 
@@ -69,10 +69,10 @@ const HowItWorks = () => {
             </span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-mono-text mb-4">
-            简单 <span className="text-gradient">4 步</span>，开启高效人生
+            简单 <span className="text-gradient">4 步</span>，让目标变成现实
           </h2>
           <p className="text-lg text-mono-text-secondary max-w-2xl mx-auto">
-            无需复杂学习，像呼吸一样自然地使用 mono
+            不需要复杂的计划技巧，mono 会帮你一步步走到终点
           </p>
         </div>
 
@@ -135,10 +135,10 @@ const HowItWorks = () => {
         {/* CTA */}
         <div className="mt-16 text-center">
           <p className="text-mono-text-secondary mb-4">
-            准备好开始你的第一个目标了吗？
+            你的目标值得被实现
           </p>
           <button onClick={() => navigate('/create')} className="bg-mono-primary hover:bg-mono-primary-dark text-white font-medium px-8 py-4 rounded-full shadow-mono hover:shadow-mono-lg transition-all duration-300 transform hover:scale-105">
-            免费开始使用
+            今天就开始
           </button>
         </div>
       </div>

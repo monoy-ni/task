@@ -3,28 +3,23 @@ import { useEffect, useRef, useState } from 'react';
 const painPoints = [
   {
     number: '01',
-    title: '不知道从哪里开始',
-    description: '面对宏大目标，感到无从下手，缺乏清晰的行动路径',
+    title: '有目标，但不知从何开始',
+    description: '我想学习新技能、完成大项目，但面对宏大的目标感到无从下手',
   },
   {
     number: '02',
-    title: '计划太虚或太细',
-    description: '要么计划过于笼统无法执行，要么过于琐碎难以坚持',
+    title: '以为是自己不够自律',
+    description: '计划总是半途而废，以为是自己执行力不行，其实只是目标太大',
   },
   {
     number: '03',
-    title: '每天不知道先做什么',
-    description: '任务堆积如山，没有优先级判断，效率低下',
+    title: '不知道今天该做什么',
+    description: '目标在那边，但不知道今天该迈哪一步，一天天过去毫无进展',
   },
   {
     number: '04',
-    title: '计划变动后全乱',
-    description: '一旦有突发情况，整个计划被打乱，需要重新规划',
-  },
-  {
-    number: '05',
-    title: '复盘难坚持',
-    description: '知道复盘重要，但缺乏工具和引导，难以形成习惯',
+    title: '遇到阻碍就停滞',
+    description: '一旦遇到困难或计划被打乱，就不知道该怎么继续，干脆放弃',
   },
 ];
 
@@ -62,14 +57,14 @@ const PainPoints = () => {
           <div className="inline-flex items-center gap-2 bg-white rounded-full px-4 py-2 shadow-soft mb-6">
             <span className="w-2 h-2 bg-mono-text rounded-full animate-pulse"></span>
             <span className="text-sm font-medium text-mono-text-secondary">
-              这些困扰，我们懂
+              这些困扰，我们都懂
             </span>
           </div>
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-mono-text mb-4">
-            计划总是<span className="text-mono-primary">半途而废</span>？
+            不是你不够努力，是<span className="text-mono-primary">目标太大了</span>
           </h2>
           <p className="text-lg text-mono-text-secondary max-w-2xl mx-auto">
-            无论是备考、项目推进还是自我管理，这些痛点是否也在困扰着你？
+            我们常常以为是执行力的问题，其实只是大脑不知道第一步该迈哪只脚
           </p>
         </div>
 
@@ -116,7 +111,7 @@ const PainPoints = () => {
           <div className="inline-flex items-center gap-3 bg-mono-primary/10 rounded-full px-6 py-3">
             <span className="text-mono-primary text-xl">✦</span>
             <span className="text-mono-text font-medium">
-              mono 用 AI 帮你解决这些问题
+              mono 把大目标拆小，让你只需要关心今天
             </span>
           </div>
         </div>

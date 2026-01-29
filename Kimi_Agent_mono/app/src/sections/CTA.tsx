@@ -1,13 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router';
 
-const benefits = [
-  '永久免费基础功能',
-  '无需信用卡',
-  '随时取消',
-  '数据安全保障',
-];
-
 const CTA = () => {
   const navigate = useNavigate();
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -146,40 +139,27 @@ const CTA = () => {
           <div className="inline-flex items-center gap-2 bg-mono-primary/10 rounded-full px-4 py-2 mb-6">
             <span className="text-mono-primary text-lg">✦</span>
             <span className="text-sm font-medium text-mono-primary">
-              立即开始你的旅程
+              今天就开始
             </span>
           </div>
 
           {/* Headline */}
           <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-bold text-mono-text mb-4">
-            让 mono 成为你的
-            <span className="text-gradient block mt-2">任务管理伙伴</span>
+            你的目标值得被实现
+            <span className="text-gradient block mt-2">mono 陪你一步步走到终点</span>
           </h2>
 
           {/* Description */}
           <p className="text-lg text-mono-text-secondary max-w-xl mx-auto mb-8">
-            无论是备考、项目推进还是习惯养成，mono 都能帮你将宏大目标分解为可执行的小任务，让每一天都充满成就感。
+            有目标但不知从何开始？mono 把你的大目标拆成每天能完成的小任务，让目标变成现实。
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-wrap justify-center gap-4 mb-8">
+          <div className="flex flex-wrap justify-center gap-4">
             <button onClick={() => navigate('/create')} className="bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full px-8 py-4 text-lg font-medium shadow-mono hover:shadow-mono-lg transition-all duration-300 transform hover:scale-105 flex items-center gap-2 group">
-              免费开始
+              今天就开始
               <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
             </button>
-          </div>
-
-          {/* Benefits */}
-          <div className="flex flex-wrap justify-center gap-4">
-            {benefits.map((benefit, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-2 text-sm text-mono-text-secondary"
-              >
-                <span className="text-mono-primary">✓</span>
-                {benefit}
-              </div>
-            ))}
           </div>
         </div>
       </div>
