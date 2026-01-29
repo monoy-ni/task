@@ -138,9 +138,9 @@ export default function DailyTasksTimeline() {
         <div className="mt-6 pt-6 border-t border-gray-200">
           <h3 className="text-sm font-semibold text-gray-700 mb-3">今日进度</h3>
           <div className="space-y-3">
-            <div className="bg-blue-50 rounded-lg p-3">
+            <div className="bg-emerald-50 rounded-lg p-3">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm text-blue-700">可用时间</span>
+                <span className="text-sm text-emerald-700">可用时间</span>
                 {editingHours ? (
                   <div className="flex items-center gap-1">
                     <input
@@ -153,7 +153,7 @@ export default function DailyTasksTimeline() {
                     />
                     <button
                       onClick={() => setEditingHours(false)}
-                      className="text-xs text-blue-600"
+                      className="text-xs text-emerald-600"
                     >
                       ✓
                     </button>
@@ -161,34 +161,34 @@ export default function DailyTasksTimeline() {
                 ) : (
                   <button
                     onClick={() => setEditingHours(true)}
-                    className="text-lg font-semibold text-blue-600 hover:text-blue-700"
+                    className="text-lg font-semibold text-emerald-600 hover:text-emerald-700"
                   >
                     {availableHours}h
                   </button>
                 )}
               </div>
-              <div className="h-2 bg-blue-200 rounded-full overflow-hidden">
+              <div className="h-2 bg-emerald-200 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-blue-600 transition-all"
+                  className="h-full bg-emerald-500 transition-all"
                   style={{ width: `${Math.min(100, (usedHours / availableHours) * 100)}%` }}
                 ></div>
               </div>
-              <div className="flex justify-between text-xs text-blue-700 mt-1">
+              <div className="flex justify-between text-xs text-emerald-700 mt-1">
                 <span>已用 {usedHours}h</span>
                 <span>剩余 {Math.max(0, remainingHours).toFixed(1)}h</span>
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-green-50 rounded-lg p-2">
-                <div className="text-xs text-green-700">已完成</div>
-                <div className="text-xl font-semibold text-green-600">
+              <div className="bg-emerald-50 rounded-lg p-2">
+                <div className="text-xs text-emerald-700">已完成</div>
+                <div className="text-xl font-semibold text-emerald-600">
                   {tasksWithQuadrant.filter((t) => t.status === 'completed').length}
                 </div>
               </div>
-              <div className="bg-amber-50 rounded-lg p-2">
-                <div className="text-xs text-amber-700">未完成</div>
-                <div className="text-xl font-semibold text-amber-600">
+              <div className="bg-lime-50 rounded-lg p-2">
+                <div className="text-xs text-lime-700">未完成</div>
+                <div className="text-xl font-semibold text-lime-600">
                   {tasksWithQuadrant.filter((t) => t.status !== 'completed').length}
                 </div>
               </div>
@@ -228,7 +228,7 @@ export default function DailyTasksTimeline() {
 
           <Link
             to={`/review/${projectId}`}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 text-sm"
           >
             <CheckCircle2 className="size-4" />
             日终复盘
@@ -287,7 +287,7 @@ function TimelineView({
       {/* 优先任务区 */}
       <div className="mb-8">
         <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-          <span className="w-1 h-5 bg-blue-600 rounded"></span>
+          <span className="w-1 h-5 bg-emerald-500 rounded"></span>
           优先任务
         </h3>
         <div className="space-y-3">
@@ -295,7 +295,7 @@ function TimelineView({
             <TimelineTaskCard
               task={top1}
               label="TOP 1"
-              labelColor="bg-red-500"
+              labelColor="bg-yellow-400"
               onClick={onTaskClick}
               onStatusChange={onStatusChange}
             />
@@ -304,7 +304,7 @@ function TimelineView({
             <TimelineTaskCard
               task={top2}
               label="TOP 2"
-              labelColor="bg-blue-500"
+              labelColor="bg-emerald-400"
               onClick={onTaskClick}
               onStatusChange={onStatusChange}
             />
@@ -313,7 +313,7 @@ function TimelineView({
             <TimelineTaskCard
               task={top3}
               label="TOP 3"
-              labelColor="bg-green-500"
+              labelColor="bg-lime-400"
               onClick={onTaskClick}
               onStatusChange={onStatusChange}
             />
@@ -324,8 +324,8 @@ function TimelineView({
       {/* 其他任务 */}
       {otherTasks.length > 0 && (
         <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <span className="w-1 h-5 bg-gray-400 rounded"></span>
+          <h3 className="text-sm font-semibold text-emerald-700 mb-4 flex items-center gap-2">
+            <span className="w-1 h-5 bg-emerald-400 rounded"></span>
             备选任务
           </h3>
           <div className="space-y-3">
@@ -335,6 +335,8 @@ function TimelineView({
                 task={task}
                 onClick={onTaskClick}
                 onStatusChange={onStatusChange}
+                label="备选"
+                labelColor="bg-emerald-100 text-emerald-700"
               />
             ))}
           </div>
@@ -370,19 +372,19 @@ function TimelineTaskCard({
   const [blockReason, setBlockReason] = useState('');
 
   const quadrantColors = {
-    IU: 'border-l-red-500 bg-red-50/50',
-    IN: 'border-l-blue-500 bg-blue-50/50',
-    NU: 'border-l-amber-500 bg-amber-50/50',
+    IU: 'border-l-yellow-400 bg-yellow-50/50',
+    IN: 'border-l-emerald-400 bg-emerald-50/50',
+    NU: 'border-l-lime-400 bg-lime-50/50',
     NN: 'border-l-gray-400 bg-gray-50',
   };
 
   const statusIcons = {
     todo: <div className="size-5 border-2 border-gray-400 rounded-full"></div>,
-    'in-progress': <div className="size-5 bg-blue-500 rounded-full flex items-center justify-center">
+    'in-progress': <div className="size-5 bg-emerald-400 rounded-full flex items-center justify-center">
       <div className="size-2 bg-white rounded-full"></div>
     </div>,
-    blocked: <AlertCircle className="size-5 text-red-500" />,
-    completed: <CheckCircle2 className="size-5 text-green-500 fill-current" />,
+    blocked: <AlertCircle className="size-5 text-yellow-500" />,
+    completed: <CheckCircle2 className="size-5 text-emerald-500 fill-current" />,
   };
 
   const handleStart = () => {
@@ -436,7 +438,7 @@ function TimelineTaskCard({
           </div>
 
           {task.status === 'blocked' && task.blockedReason && (
-            <div className="mt-2 bg-red-100 border border-red-200 rounded p-2 text-xs text-red-800">
+            <div className="mt-2 bg-yellow-100 border border-yellow-200 rounded p-2 text-xs text-yellow-800">
               <strong>阻塞:</strong> {task.blockedReason}
             </div>
           )}
@@ -448,7 +450,7 @@ function TimelineTaskCard({
             <>
               <button
                 onClick={handleStart}
-                className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+                className="px-3 py-1.5 bg-emerald-500 text-white text-sm rounded hover:bg-emerald-600"
                 title="开始任务"
               >
                 开始
@@ -466,7 +468,7 @@ function TimelineTaskCard({
             <>
               <button
                 onClick={handleComplete}
-                className="px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700"
                 title="完成任务"
               >
                 完成
@@ -483,7 +485,7 @@ function TimelineTaskCard({
           {task.status === 'blocked' && (
             <button
               onClick={handleStart}
-              className="px-3 py-1.5 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              className="px-3 py-1.5 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
             >
               继续
             </button>
@@ -504,7 +506,7 @@ function TimelineTaskCard({
           <div className="flex gap-2 mt-2">
             <button
               onClick={handleBlock}
-              className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700"
+              className="px-3 py-1.5 bg-yellow-500 text-white text-sm rounded hover:bg-yellow-600"
             >
               确认阻塞
             </button>
@@ -617,15 +619,15 @@ function MiniCalendar({
               onClick={() => onDateSelect(date)}
               className={`aspect-square rounded text-sm flex flex-col items-center justify-center relative transition-colors ${
                 isSelected
-                  ? 'bg-blue-600 text-white font-semibold'
+                  ? 'bg-emerald-500 text-white font-semibold'
                   : isToday
-                  ? 'bg-blue-50 text-blue-600 font-semibold'
+                  ? 'bg-emerald-50 text-emerald-600 font-semibold'
                   : 'hover:bg-gray-100'
               }`}
             >
               {day}
               {hasTasks && !isSelected && (
-                <div className="absolute bottom-1 w-1 h-1 bg-blue-600 rounded-full"></div>
+                <div className="absolute bottom-1 w-1 h-1 bg-emerald-500 rounded-full"></div>
               )}
             </button>
           );
@@ -647,9 +649,9 @@ function TaskDetailPanel({
 }) {
   const quadrant = getTaskQuadrant(task);
   const quadrantInfo = {
-    IU: { text: '重要且紧急', color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-    IN: { text: '重要不紧急', color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-    NU: { text: '不重要但紧急', color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-200' },
+    IU: { text: '重要且紧急', color: 'text-yellow-600', bg: 'bg-yellow-50', border: 'border-yellow-200' },
+    IN: { text: '重要不紧急', color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
+    NU: { text: '不重要但紧急', color: 'text-lime-600', bg: 'bg-lime-50', border: 'border-lime-200' },
     NN: { text: '不重要不紧急', color: 'text-gray-600', bg: 'bg-gray-50', border: 'border-gray-200' },
   };
 
@@ -700,7 +702,7 @@ function TaskDetailPanel({
                 <div
                   key={i}
                   className={`w-2 h-2 rounded-full ${
-                    i < task.importance ? 'bg-red-500' : 'bg-gray-200'
+                    i < task.importance ? 'bg-yellow-400' : 'bg-gray-200'
                   }`}
                 ></div>
               ))}
@@ -713,7 +715,7 @@ function TaskDetailPanel({
                 <div
                   key={i}
                   className={`w-2 h-2 rounded-full ${
-                    i < task.urgency ? 'bg-amber-500' : 'bg-gray-200'
+                    i < task.urgency ? 'bg-lime-400' : 'bg-gray-200'
                   }`}
                 ></div>
               ))}
@@ -722,9 +724,9 @@ function TaskDetailPanel({
         </div>
 
         {task.blockedReason && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="text-sm font-medium text-red-900 mb-1">阻塞原因</div>
-            <div className="text-sm text-red-800">{task.blockedReason}</div>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <div className="text-sm font-medium text-yellow-900 mb-1">阻塞原因</div>
+            <div className="text-sm text-yellow-800">{task.blockedReason}</div>
           </div>
         )}
       </div>

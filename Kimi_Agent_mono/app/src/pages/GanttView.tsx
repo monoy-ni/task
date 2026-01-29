@@ -256,9 +256,9 @@ export default function GanttView() {
   const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
 
   return (
-    <div className="flex h-[calc(100vh-120px)] gap-4">
+    <div className="flex h-[calc(100vh-120px)] gap-4 overflow-hidden">
       {/* 左侧：项目信息和统计 */}
-      <div className="w-72 flex-shrink-0 space-y-4">
+      <div className="w-72 flex-shrink-0 space-y-4 overflow-y-auto">
         {/* 项目概览 */}
         <div className="bg-white rounded-lg border border-gray-200 p-4">
           <h2 className="font-semibold mb-3">{project.title}</h2>
@@ -268,7 +268,7 @@ export default function GanttView() {
               <div className="flex items-center gap-2">
                 <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-blue-600 transition-all"
+                    className="h-full bg-emerald-500 transition-all"
                     style={{ width: `${progress}%` }}
                   ></div>
                 </div>
@@ -278,7 +278,7 @@ export default function GanttView() {
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
                 <div className="text-xs text-gray-500">已完成</div>
-                <div className="text-lg font-semibold text-green-600">{completedCount}</div>
+                <div className="text-lg font-semibold text-emerald-600">{completedCount}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500">总任务</div>
@@ -307,7 +307,7 @@ export default function GanttView() {
               onClick={() => setFilterQuadrant('all')}
               className={`w-full text-left px-3 py-2 rounded text-sm ${
                 filterQuadrant === 'all'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  ? 'bg-emerald-50 text-emerald-700 font-medium'
                   : 'hover:bg-gray-50'
               }`}
             >
@@ -317,33 +317,33 @@ export default function GanttView() {
               onClick={() => setFilterQuadrant('IU')}
               className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
                 filterQuadrant === 'IU'
-                  ? 'bg-red-50 text-red-700 font-medium'
+                  ? 'bg-yellow-100 text-yellow-700 font-medium'
                   : 'hover:bg-gray-50'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-red-500"></div>
+              <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
               重要且紧急 ({plan.tasks.filter(t => getTaskQuadrant(t) === 'IU').length})
             </button>
             <button
               onClick={() => setFilterQuadrant('IN')}
               className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
                 filterQuadrant === 'IN'
-                  ? 'bg-blue-50 text-blue-700 font-medium'
+                  ? 'bg-emerald-50 text-emerald-700 font-medium'
                   : 'hover:bg-gray-50'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+              <div className="w-3 h-3 rounded-full bg-emerald-400"></div>
               重要不紧急 ({plan.tasks.filter(t => getTaskQuadrant(t) === 'IN').length})
             </button>
             <button
               onClick={() => setFilterQuadrant('NU')}
               className={`w-full text-left px-3 py-2 rounded text-sm flex items-center gap-2 ${
                 filterQuadrant === 'NU'
-                  ? 'bg-amber-50 text-amber-700 font-medium'
+                  ? 'bg-lime-100 text-lime-700 font-medium'
                   : 'hover:bg-gray-50'
               }`}
             >
-              <div className="w-3 h-3 rounded-full bg-amber-500"></div>
+              <div className="w-3 h-3 rounded-full bg-lime-400"></div>
               不重要紧急 ({plan.tasks.filter(t => getTaskQuadrant(t) === 'NU').length})
             </button>
           </div>
@@ -372,18 +372,18 @@ export default function GanttView() {
       </div>
 
       {/* 右侧：甘特图主区域 */}
-      <div className="flex-1 flex flex-col bg-white rounded-lg border border-gray-200">
+      <div className="flex-1 flex flex-col bg-white rounded-lg border border-gray-200 overflow-hidden">
         {/* 工具栏 */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200">
-          <h2 className="text-lg font-semibold">项目甘特图</h2>
+          <h2 className="text-lg font-semibold text-gray-700">项目甘特图</h2>
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center gap-1 bg-emerald-50 rounded-lg p-1">
               <button
                 onClick={() => setZoomLevel('day')}
                 className={`px-3 py-1 text-sm rounded ${
                   zoomLevel === 'day'
-                    ? 'bg-white shadow-sm font-medium'
-                    : 'text-gray-600'
+                    ? 'bg-white shadow-sm font-medium text-emerald-700'
+                    : 'text-gray-600 hover:text-emerald-600'
                 }`}
               >
                 日
@@ -392,8 +392,8 @@ export default function GanttView() {
                 onClick={() => setZoomLevel('week')}
                 className={`px-3 py-1 text-sm rounded ${
                   zoomLevel === 'week'
-                    ? 'bg-white shadow-sm font-medium'
-                    : 'text-gray-600'
+                    ? 'bg-white shadow-sm font-medium text-emerald-700'
+                    : 'text-gray-600 hover:text-emerald-600'
                 }`}
               >
                 周
@@ -402,8 +402,8 @@ export default function GanttView() {
                 onClick={() => setZoomLevel('month')}
                 className={`px-3 py-1 text-sm rounded ${
                   zoomLevel === 'month'
-                    ? 'bg-white shadow-sm font-medium'
-                    : 'text-gray-600'
+                    ? 'bg-white shadow-sm font-medium text-emerald-700'
+                    : 'text-gray-600 hover:text-emerald-600'
                 }`}
               >
                 月
@@ -414,11 +414,11 @@ export default function GanttView() {
 
         {/* AI建议 */}
         {suggestions.length > 0 && (
-          <div className="mx-6 mt-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="mx-6 mt-4 bg-emerald-50 border border-emerald-200 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <Sparkles className="size-5 text-purple-600 flex-shrink-0 mt-0.5" />
+              <Sparkles className="size-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h3 className="font-semibold text-purple-900 mb-2">AI 优化建议</h3>
+                <h3 className="font-semibold text-emerald-900 mb-2">AI 优化建议</h3>
                 <div className="space-y-2">
                   {suggestions.map((suggestion, index) => (
                     <div key={index} className="bg-white rounded p-3 flex items-start justify-between">
@@ -432,7 +432,7 @@ export default function GanttView() {
                       </div>
                       <button
                         onClick={() => applySuggestion(suggestion)}
-                        className="ml-3 px-3 py-1 text-xs bg-purple-600 text-white rounded hover:bg-purple-700"
+                        className="ml-3 px-3 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-700"
                       >
                         应用
                       </button>
@@ -462,23 +462,23 @@ export default function GanttView() {
         {/* 图例 */}
         <div className="px-6 py-3 border-t border-gray-200 flex items-center gap-6 text-xs">
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-gray-300 rounded"></div>
+            <div className="w-4 h-3 bg-gray-200 rounded"></div>
             <span>待开始</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-blue-500 rounded"></div>
+            <div className="w-4 h-3 bg-emerald-400 rounded"></div>
             <span>进行中</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-green-500 rounded"></div>
+            <div className="w-4 h-3 bg-emerald-600 rounded"></div>
             <span>已完成</span>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-4 h-3 bg-red-500 rounded"></div>
+            <div className="w-4 h-3 bg-yellow-400 rounded"></div>
             <span>阻塞</span>
           </div>
           <div className="flex items-center gap-2">
-            <AlertTriangle className="size-4 text-amber-500" />
+            <AlertTriangle className="size-4 text-yellow-500" />
             <span>有依赖关系</span>
           </div>
         </div>
@@ -557,12 +557,16 @@ function GanttChart({
     );
   };
 
+  // 计算甘特图总宽度
+  const totalWidth = timeColumns.length * (zoomLevel === 'day' ? 60 : zoomLevel === 'week' ? 100 : 120);
+  const chartWidth = Math.max(totalWidth + 320, 800); // 至少800px，确保能滚动
+
   return (
-    <div className="min-w-max">
+    <div className="flex flex-col" style={{ width: `${chartWidth}px` }}>
       {/* 时间轴标题 */}
-      <div className="flex sticky top-0 z-10 bg-gray-50 border-b border-gray-200">
-        <div className="w-80 px-4 py-3 font-semibold border-r border-gray-200">任务名称</div>
-        <div className="flex-1 flex">
+      <div className="flex sticky top-0 z-10 bg-emerald-50/50 border-b border-gray-200 flex-shrink-0">
+        <div className="w-80 flex-shrink-0 px-4 py-3 font-semibold text-gray-700 border-r border-gray-200">任务名称</div>
+        <div style={{ width: `${totalWidth}px` }} className="flex flex-shrink-0">
           {timeColumns.map((date, i) => (
             <div
               key={i}
@@ -585,7 +589,9 @@ function GanttChart({
       </div>
 
       {/* 任务行 */}
-      <div>{tasks.map((task) => renderTask(task))}</div>
+      <div className="flex flex-col flex-shrink-0" style={{ width: `${chartWidth}px` }}>
+        {tasks.map((task) => renderTask(task))}
+      </div>
 
       {tasks.length === 0 && (
         <div className="text-center py-16 text-gray-500">暂无任务</div>
@@ -635,10 +641,10 @@ function GanttRow({
   const barWidth = taskDuration * pixelsPerDay;
 
   const colorMap = {
-    todo: 'bg-gray-300 border-gray-400',
-    'in-progress': 'bg-blue-500 border-blue-600',
-    blocked: 'bg-red-500 border-red-600',
-    completed: 'bg-green-500 border-green-600',
+    todo: 'bg-gray-200 border-gray-300',
+    'in-progress': 'bg-emerald-400 border-emerald-500',
+    blocked: 'bg-yellow-400 border-yellow-500',
+    completed: 'bg-emerald-600 border-emerald-700',
   };
 
   const quadrant = getTaskQuadrant(task);
@@ -669,13 +675,13 @@ function GanttRow({
 
   return (
     <div
-      className="flex border-b border-gray-100 hover:bg-blue-50/30 group"
+      className="flex border-b border-gray-100 hover:bg-emerald-50/30 group"
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
       onMouseLeave={handleMouseUp}
     >
       {/* 左侧任务名 */}
-      <div className="w-80 px-4 py-3 border-r border-gray-200 flex items-center gap-2">
+      <div className="w-80 flex-shrink-0 px-4 py-3 border-r border-gray-200 flex items-center gap-2">
         <div style={{ marginLeft: `${level * 20}px` }} className="flex items-center gap-2">
           {hasChildren && (
             <button
@@ -702,7 +708,7 @@ function GanttRow({
       </div>
 
       {/* 右侧时间轴 */}
-      <div className="flex-1 relative py-2">
+      <div className="flex-1 relative py-2 overflow-hidden">
         {/* 今日线 */}
         {(() => {
           const today = new Date();
@@ -713,7 +719,7 @@ function GanttRow({
           if (todayDays >= 0 && todayDays <= totalDays) {
             return (
               <div
-                className="absolute top-0 bottom-0 w-px bg-red-400 z-10 opacity-50"
+                className="absolute top-0 bottom-0 w-px bg-emerald-400 z-10 opacity-50"
                 style={{ left: `${todayDays * pixelsPerDay}px` }}
               ></div>
             );
@@ -725,7 +731,7 @@ function GanttRow({
         <div
           className={`absolute h-6 rounded border-l-4 cursor-move transition-all ${
             colorMap[task.status]
-          } ${isHighPriority ? 'ring-2 ring-red-300' : ''} ${
+          } ${isHighPriority ? 'ring-2 ring-yellow-300' : ''} ${
             isDragging ? 'opacity-60 shadow-lg' : 'shadow-sm group-hover:shadow-md'
           }`}
           style={{
