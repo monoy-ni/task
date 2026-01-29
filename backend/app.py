@@ -98,6 +98,15 @@ def create_task_breakdown():
             result = ai_service.generate_task_breakdown(form_data)
         print(f"[DEBUG] 任务拆解完成")  # 调试
 
+        # 打印任务拆解结果
+        print(f"\n[DEBUG] ========== 任务拆解结果 ==========")
+        print(f"[DEBUG] project_id: {result.get('project_id')}")
+        print(f"[DEBUG] analysis: {result.get('analysis')}")
+        print(f"[DEBUG] tasks 数量: {len(result.get('tasks', {}))}")
+        print(f"[DEBUG] tasks 内容: {result.get('tasks')}")
+        print(f"[DEBUG] follow_up_questions: {result.get('follow_up_questions')}")
+        print(f"[DEBUG] =====================================\n")
+
         # 存储项目数据
         project_id = result["project_id"]
         projects_storage[project_id] = {
@@ -110,7 +119,7 @@ def create_task_breakdown():
             "updated_at": datetime.now().isoformat()
         }
 
-        return jsonify({
+        response_data = {
             "success": True,
             "data": {
                 "project_id": project_id,
@@ -118,7 +127,15 @@ def create_task_breakdown():
                 "follow_up_questions": result["follow_up_questions"],
                 "created_at": datetime.now().isoformat()
             }
-        })
+        }
+        print(f"[DEBUG] ========== 返回给客户端的数据 ==========")
+        print(f"[DEBUG] success: {response_data['success']}")
+        print(f"[DEBUG] project_id: {response_data['data']['project_id']}")
+        print(f"[DEBUG] tasks: {response_data['data']['tasks']}")
+        print(f"[DEBUG] follow_up_questions: {response_data['data']['follow_up_questions']}")
+        print(f"[DEBUG] ===========================================\n")
+
+        return jsonify(response_data)
 
     except Exception as e:
         import traceback

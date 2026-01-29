@@ -160,6 +160,13 @@ class AIService:
             tasks = future_tasks.result()
             questions_result = future_questions.result()
 
+        print(f"[DEBUG] 生成Agent完成:")
+        print(f"  - tasks keys: {list(tasks.keys())}")
+        print(f"  - monthly 任务数: {len(tasks.get('monthly', {}))}")
+        print(f"  - weekly 任务数: {len(tasks.get('weekly', {}))}")
+        print(f"  - daily 任务数: {len(tasks.get('daily', {}))}")
+        print(f"  - questions 数量: {len(questions_result)}")
+
         # 组装结果
         project_id = str(uuid.uuid4())
 
@@ -487,6 +494,8 @@ class AIService:
 
     def _parse_breakdown_response(self, response: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """解析任务拆解响应"""
+        print(f"[DEBUG] 解析任务拆解响应，响应长度: {len(response)} 字符")
+        print(f"[DEBUG] AI 响应内容（前500字符）: {response[:500]}")
         response = response.strip()
 
         if "```json" in response:
