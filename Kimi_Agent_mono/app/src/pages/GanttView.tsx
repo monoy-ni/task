@@ -766,13 +766,22 @@ function convertHierarchyToPlan(project: any): Plan {
   let currentDate = new Date(now);
 
   // 年度任务（顶层）
+  const yearlyTaskIds = new Map<string, string>(); // 年名 -> 年任务ID
   (hierarchy.yearly || []).forEach((yearTask: any, i: number) => {
+    const yearNum = i + 1;
     const startDate = new Date(currentDate);
-    const endDate = new Date(yearTask.endDate || currentDate.getTime() + 365 * 24 * 60 * 60 * 1000);
+    startDate.setMonth(0); // 从1月开始
+    startDate.setDate(1);
+
+    const endDate = new Date(startDate);
+    endDate.setFullYear(endDate.getFullYear() + 1);
+
+    const taskId = `yearly-year-${yearNum}`;
+    yearlyTaskIds.set(`第${yearNum}年`, taskId);
 
     tasks.push({
-      id: `yearly-${taskCounter++}`,
-      title: yearTask.title || `年度目标 ${i + 1}`,
+      id: taskId,
+      title: yearTask.title || `第${yearNum}年`,
       description: yearTask.description || '',
       startDate,
       endDate,
@@ -784,60 +793,97 @@ function convertHierarchyToPlan(project: any): Plan {
       risk: 3,
       parentId: undefined,
       dependencies: [],
-      level: 'month',
+      level: 'month', // 年度也作为 month 级别显示在顶层
     });
   });
 
   // 季度任务
+  const quarterlyTaskIds = new Map<string, string>(); // 季名 -> 季任务ID
   Object.keys(hierarchy.quarterly || {}).forEach((quarter) => {
     if (Array.isArray(hierarchy.quarterly[quarter])) {
-      hierarchy.quarterly[quarter].forEach((quarterTask: any, i: number) => {
-      const startDate = new Date(quarterTask.startDate || currentDate);
-      const endDate = new Date(quarterTask.endDate || startDate.getTime() + 90 * 24 * 60 * 60 * 1000);
+      // 解析季度：如 "Q1" 或 "第1季度" -> 1
+      const quarterMatch = quarter.match(/[Qq]?(\d+)/);
+      const quarterNum = quarterMatch ? parseInt(quarterMatch[1]) : 1;
 
-      tasks.push({
-        id: `quarterly-${taskCounter++}`,
-        title: quarterTask.title || `${quarter}任务 ${i + 1}`,
-        description: quarterTask.description || '',
-        startDate,
-        endDate,
-        duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-        status: 'todo',
-        importance: 4,
-        urgency: 3,
-        cost: 50,
-        risk: 2,
-        parentId: undefined,
-        dependencies: [],
-        level: 'month',
-      });
+      // 计算父年
+      const parentYearKey = `第1年`; // 默认第1年
+      const parentId = yearlyTaskIds.get(parentYearKey);
+
+      const taskId = `quarterly-quarter-${quarterNum}`;
+      quarterlyTaskIds.set(`第${quarterNum}季度`, taskId);
+      quarterlyTaskIds.set(`Q${quarterNum}`, taskId);
+
+      const startDate = new Date(currentDate);
+      startDate.setMonth((quarterNum - 1) * 3);
+      startDate.setDate(1);
+
+      const endDate = new Date(startDate);
+      endDate.setMonth(endDate.getMonth() + 3);
+
+      hierarchy.quarterly[quarter].forEach((quarterTask: any) => {
+        tasks.push({
+          id: taskId,
+          title: quarterTask.title || `第${quarterNum}季度`,
+          description: quarterTask.description || '',
+          startDate,
+          endDate,
+          duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+          status: 'todo',
+          importance: 4,
+          urgency: 3,
+          cost: 50,
+          risk: 2,
+          parentId, // 关联到父年任务
+          dependencies: [],
+          level: 'month',
+        });
       });
     }
   });
 
   // 月度任务
+  // 先收集月任务ID用于周任务建立父子关系
+  const monthlyTaskIds = new Map<string, string>(); // 月名 -> 月任务ID
+
   Object.keys(hierarchy.monthly || {}).forEach((month) => {
     if (Array.isArray(hierarchy.monthly[month])) {
-      hierarchy.monthly[month].forEach((monthTask: any, i: number) => {
-      const startDate = new Date(monthTask.startDate || currentDate);
-      const endDate = new Date(monthTask.endDate || startDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+      hierarchy.monthly[month].forEach((monthTask: any) => {
+        // 解析月数：如 "第1个月" -> 1
+        const monthMatch = month.match(/第(\d+)个月/);
+        const monthNum = monthMatch ? parseInt(monthMatch[1]) : 1;
 
-      tasks.push({
-        id: `monthly-${taskCounter++}`,
-        title: monthTask.title || `${month}任务 ${i + 1}`,
-        description: monthTask.description || '',
-        startDate,
-        endDate,
-        duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-        status: 'todo',
-        importance: 4,
-        urgency: 4,
-        cost: 20,
-        risk: 2,
-        parentId: undefined,
-        dependencies: [],
-        level: 'month',
-      });
+        // 计算父季度：月1-3属于Q1，月4-6属于Q2，月7-9属于Q3，月10-12属于Q4
+        const parentQuarterNum = Math.ceil(monthNum / 3);
+        const parentQuarterKey = `第${parentQuarterNum}季度`;
+        const parentId = quarterlyTaskIds.get(parentQuarterKey) || quarterlyTaskIds.get(`Q${parentQuarterNum}`);
+
+        // 计算开始和结束日期
+        const startDate = new Date(currentDate);
+        startDate.setMonth(startDate.getMonth() + monthNum - 1);
+        startDate.setDate(1);
+
+        const endDate = new Date(startDate);
+        endDate.setMonth(endDate.getMonth() + 1);
+
+        const taskId = `monthly-month-${monthNum}`;
+        monthlyTaskIds.set(`第${monthNum}个月`, taskId);
+
+        tasks.push({
+          id: taskId,
+          title: monthTask.title || month,
+          description: monthTask.description || '',
+          startDate,
+          endDate,
+          duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+          status: 'todo',
+          importance: 4,
+          urgency: 4,
+          cost: 20,
+          risk: 2,
+          parentId, // 关联到父季度任务
+          dependencies: [],
+          level: 'month',
+        });
       });
     }
   });
@@ -845,54 +891,125 @@ function convertHierarchyToPlan(project: any): Plan {
   // 周度任务
   Object.keys(hierarchy.weekly || {}).forEach((week) => {
     if (Array.isArray(hierarchy.weekly[week])) {
-      hierarchy.weekly[week].forEach((weekTask: any, i: number) => {
-      const startDate = new Date(weekTask.startDate || currentDate);
-      const endDate = new Date(weekTask.endDate || startDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+      hierarchy.weekly[week].forEach((weekTask: any) => {
+        // 解析周数：从week key提取，如 "第1周" -> 1
+        const weekMatch = week.match(/第(\d+)周/);
+        const weekNum = weekMatch ? parseInt(weekMatch[1]) : 1;
 
-      tasks.push({
-        id: `weekly-${taskCounter++}`,
-        title: weekTask.title || `${week}任务 ${i + 1}`,
-        description: weekTask.description || '',
-        startDate,
-        endDate,
-        duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-        status: 'todo',
-        importance: 3,
-        urgency: 4,
-        cost: 8,
-        risk: 1,
-        parentId: undefined,
-        dependencies: [],
-        level: 'week',
-      });
+        // 计算开始日期：基于当前日期和周数
+        const startDate = new Date(currentDate);
+        startDate.setDate(currentDate.getDate() + (weekNum - 1) * 7);
+
+        const endDate = new Date(startDate);
+        endDate.setDate(startDate.getDate() + 7);
+
+        // 计算父月：周1-4属于第1个月，周5-8属于第2个月
+        const parentMonthNum = Math.ceil(weekNum / 4);
+        const parentMonthKey = `第${parentMonthNum}个月`;
+        const parentId = monthlyTaskIds.get(parentMonthKey);
+
+        const taskId = `weekly-week-${weekNum}`;
+
+        tasks.push({
+          id: taskId,
+          title: weekTask.title || `${week}`,
+          description: weekTask.description || '',
+          startDate,
+          endDate,
+          duration: 7,
+          status: 'todo',
+          importance: 3,
+          urgency: 4,
+          cost: 8,
+          risk: 1,
+          parentId, // 关联到父月任务
+          dependencies: [],
+          level: 'week',
+        });
       });
     }
   });
 
-  // 日度任务
-  Object.keys(hierarchy.daily || {}).forEach((day) => {
-    if (Array.isArray(hierarchy.daily[day])) {
-      hierarchy.daily[day].forEach((dayTask: any, i: number) => {
-      const startDate = new Date(dayTask.startDate || currentDate);
-      const endDate = new Date(dayTask.endDate || startDate.getTime() + 1 * 24 * 60 * 60 * 1000);
+  // 日度任务 - 支持两种格式
+  // 格式1（旧）: {"第1天": [tasks]}
+  // 格式2（Agent6）: {"第1个月-第1周": {"1月1日": [tasks]}}
+  Object.keys(hierarchy.daily || {}).forEach((dayKey) => {
+    const dayData = hierarchy.daily[dayKey];
 
-      tasks.push({
-        id: `daily-${taskCounter++}`,
-        title: dayTask.title || `${day}任务 ${i + 1}`,
-        description: dayTask.description || '',
-        startDate,
-        endDate,
-        duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
-        status: 'todo',
-        importance: 3,
-        urgency: 5,
-        cost: 4,
-        risk: 1,
-        parentId: undefined,
-        dependencies: [],
-        level: 'day',
+    if (Array.isArray(dayData)) {
+      // 旧格式：直接是任务数组
+      let dayIndex = 0;
+      dayData.forEach((dayTask: any) => {
+        const startDate = new Date(dayTask.startDate || currentDate);
+        const endDate = new Date(dayTask.endDate || startDate.getTime() + 1 * 24 * 60 * 60 * 1000);
+
+        tasks.push({
+          id: `daily-${taskCounter++}`,
+          title: dayTask.title || `${dayKey}任务 ${dayIndex + 1}`,
+          description: dayTask.description || '',
+          startDate,
+          endDate,
+          duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+          status: 'todo',
+          importance: 3,
+          urgency: 5,
+          cost: 4,
+          risk: 1,
+          parentId: undefined,
+          dependencies: [],
+          level: 'day',
+        });
+        dayIndex++;
       });
-      });
+    } else if (typeof dayData === 'object' && !Array.isArray(dayData)) {
+      // Agent6 新格式：{"第1个月-第1周": {"1月1日": [tasks]}}
+      // 解析周数和月数
+      const weekMatch = dayKey.match(/第(\d+)个月-第(\d+)周/);
+      if (weekMatch) {
+        const weekNum = parseInt(weekMatch[2]);
+
+        // 遍历该周的每一天
+        Object.entries(dayData).forEach(([dateStr, dayTasks]: [string, any]) => {
+          if (Array.isArray(dayTasks)) {
+            dayTasks.forEach((dayTask: any, i: number) => {
+              // 解析日期字符串 "1月1日" 或 "12月25日"
+              const dateMatch = dateStr.match(/(\d+)月(\d+)日/);
+              let startDate: Date;
+              if (dateMatch) {
+                const taskMonth = parseInt(dateMatch[1]);
+                const taskDay = parseInt(dateMatch[2]);
+                startDate = new Date(now.getFullYear(), taskMonth - 1, taskDay);
+              } else {
+                startDate = new Date(currentDate);
+              }
+
+              const endDate = new Date(dayTask.endDate || startDate.getTime() + 1 * 24 * 60 * 60 * 1000);
+
+              // 计算父级周任务的ID
+              const parentWeekId = `weekly-week-${weekNum}`;
+              // 找到对应的周任务作为父级
+              const parentTask = tasks.find(t => t.id === parentWeekId);
+
+              tasks.push({
+                id: `daily-${taskCounter++}`,
+                title: dayTask.title || `${dateStr}任务 ${i + 1}`,
+                description: dayTask.description || '',
+                startDate,
+                endDate,
+                duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)),
+                status: 'todo',
+                importance: 3,
+                urgency: 5,
+                cost: 4,
+                risk: 1,
+                parentId: parentTask?.id,
+                dependencies: [],
+                level: 'day',
+              });
+            });
+          }
+        });
+      }
     }
   });
 

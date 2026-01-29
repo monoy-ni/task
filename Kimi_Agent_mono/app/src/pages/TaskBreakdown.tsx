@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { MonoAvatar } from '../components/mono';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
 
 // API 配置
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -32,7 +32,6 @@ interface TaskHierarchy {
   quarterly?: { [key: string]: Task[] } | null;
   monthly?: { [key: string]: Task[] } | null;
   weekly?: { [key: string]: Task[] } | null;
-  // daily 支持两种格式：新格式 {"第1个月-第1周": {"1月1日": [tasks]}} 或 旧格式 {"1月1日": [tasks]}
   daily?: ({ [key: string]: Task[] } | { [weekKey: string]: { [date: string]: Task[] } }) | null;
 }
 
@@ -49,23 +48,111 @@ interface TaskAnalysis {
   time_span?: string;
 }
 
+// 层级配置
+const LEVEL_CONFIG = [
+  { key: 'yearly', label: '年度', emoji: '📅' },
+  { key: 'quarterly', label: '季度', emoji: '📆' },
+  { key: 'monthly', label: '月度', emoji: '📇' },
+  { key: 'weekly', label: '周度', emoji: '📋' },
+  { key: 'daily', label: '日度', emoji: '📝' },
+];
+
+// 将任务层级转换为文本格式
+function tasksToText(tasks: TaskHierarchy): string {
+  const lines: string[] = [];
+
+  // 添加标题
+  lines.push('📋 任务拆解清单');
+  lines.push('=' .repeat(40));
+  lines.push('');
+
+  // 遍历每个层级
+  for (const config of LEVEL_CONFIG) {
+    const data = tasks[config.key as keyof TaskHierarchy];
+
+    if (!data) continue;
+
+    // 处理数组格式（yearly）
+    if (Array.isArray(data) && data.length > 0) {
+      lines.push(`${config.emoji} ${config.label}任务 (${data.length}项)`);
+      lines.push('-'.repeat(30));
+      data.forEach((task, index) => {
+        lines.push(`${index + 1}. ${task.title}`);
+        if (task.description) {
+          lines.push(`   ${task.description}`);
+        }
+      });
+      lines.push('');
+    }
+    // 处理对象格式（quarterly, monthly, weekly）
+    else if (typeof data === 'object' && !Array.isArray(data)) {
+      const entries = Object.entries(data);
+
+      // 检查是否是嵌套的日度格式
+      const isNestedDaily = entries.length > 0 &&
+        typeof entries[0][1] === 'object' &&
+        !Array.isArray(entries[0][1]);
+
+      if (isNestedDaily) {
+        // 日度嵌套格式 {"第1个月-第1周": {"1月1日": [tasks]}}
+        lines.push(`${config.emoji} ${config.label}任务`);
+        lines.push('-'.repeat(30));
+
+        entries.forEach(([weekKey, weekData]) => {
+          lines.push(`\n【${weekKey}】`);
+          const dateEntries = Object.entries(weekData as { [date: string]: Task[] });
+          dateEntries.forEach(([date, dateTasks]) => {
+            lines.push(`  ${date} (${dateTasks.length}项):`);
+            dateTasks.forEach((task, index) => {
+              lines.push(`    ${index + 1}. ${task.title}`);
+              if (task.description) {
+                lines.push(`       ${task.description}`);
+              }
+            });
+          });
+        });
+        lines.push('');
+      } else {
+        // 普通对象格式 {"Q1": [tasks]}
+        lines.push(`${config.emoji} ${config.label}任务 (${entries.length}组)`);
+        lines.push('-'.repeat(30));
+
+        entries.forEach(([key, taskList]) => {
+          lines.push(`\n【${key}】 (${taskList.length}项)`);
+          (taskList as Task[]).forEach((task, index) => {
+            lines.push(`  ${index + 1}. ${task.title}`);
+            if (task.description) {
+              lines.push(`     ${task.description}`);
+            }
+          });
+        });
+        lines.push('');
+      }
+    }
+  }
+
+  // 添加结尾
+  lines.push('=' .repeat(40));
+  lines.push('🎯 以上为任务拆解结果，请按时完成！');
+
+  return lines.join('\n');
+}
+
 export default function TaskBreakdown() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // 将 formData 保存到组件 state 中，避免从 location.state 反复读取
+  // 将 formData 保存到组件 state 中
   const [formData] = useState<FormData | null>(() => location.state?.formData || null);
 
   const [tasks, setTasks] = useState<TaskHierarchy | null>(null);
   const [analysis, setAnalysis] = useState<TaskAnalysis | null>(null);
-  const [expandedSections, setExpandedSections] = useState<{
-    [key: string]: boolean;
-  }>({});
   const [followUpQuestions, setFollowUpQuestions] = useState<FollowUpQuestion[]>([]);
   const [answers, setAnswers] = useState<{ [key: string]: any }>({});
   const [isGenerating, setIsGenerating] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [projectId, setProjectId] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!formData) {
@@ -76,7 +163,6 @@ export default function TaskBreakdown() {
     // 调用后端 API 生成任务拆解
     const fetchTaskBreakdown = async () => {
       try {
-        // 转换字段名为蛇形命名（后端格式）
         const snakeCaseData = {
           goal: formData.goal,
           has_deadline: formData.hasDeadline,
@@ -102,6 +188,11 @@ export default function TaskBreakdown() {
 
         const result = await response.json();
 
+        console.log('=== [DEBUG] API 返回结果 ===');
+        console.log('success:', result.success);
+        console.log('data:', result.data);
+        console.log('tasks 结构:', JSON.stringify(result.data?.tasks, null, 2));
+
         if (result.success) {
           setTasks(result.data.tasks);
           setAnalysis(result.data.analysis);
@@ -121,20 +212,22 @@ export default function TaskBreakdown() {
     fetchTaskBreakdown();
   }, [formData, navigate]);
 
-  const toggleSection = (key: string) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [key]: !prev[key],
-    }));
-  };
-
   const updateAnswer = (questionId: string, value: any) => {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
+  // 复制到剪贴板
+  const handleCopy = () => {
+    if (tasks) {
+      const text = tasksToText(tasks);
+      navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   // 完成创建：根据补充问题的答案重新生成任务
   const handleComplete = async () => {
-    // 如果有补充问题的答案，调用后端API重新生成任务
     const hasAnswers = Object.keys(answers).some(key => {
       const val = answers[key];
       return val && (Array.isArray(val) ? val.length > 0 : true);
@@ -155,11 +248,8 @@ export default function TaskBreakdown() {
 
         const result = await response.json();
         if (result.success) {
-          // 更新任务列表
           setTasks(result.data.tasks);
-          // 清空答案，避免重复提交
           setAnswers({});
-          // 可以在这里添加一个提示："任务已根据你的答案更新"
         } else {
           throw new Error(result.error || '重新生成任务失败');
         }
@@ -170,7 +260,6 @@ export default function TaskBreakdown() {
         setIsGenerating(false);
       }
     } else {
-      // 没有答案，直接保存并跳转
       handleSaveAndNavigate();
     }
   };
@@ -189,7 +278,6 @@ export default function TaskBreakdown() {
       dailyAvailableHours: parseFloat(formData!.dailyHours),
     };
 
-    // 保存到localStorage
     const existing = localStorage.getItem('projects');
     const projects = existing ? JSON.parse(existing) : [];
     projects.push(project);
@@ -198,7 +286,6 @@ export default function TaskBreakdown() {
     navigate(`/plan/${project.id}`);
   };
 
-  // 跳过问题：直接保存并跳转
   const handleSkip = () => {
     handleSaveAndNavigate();
   };
@@ -236,6 +323,8 @@ export default function TaskBreakdown() {
     );
   }
 
+  const tasksText = tasks ? tasksToText(tasks) : '';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#E4FBF7]/30 via-white to-[#C9F7EF]/30 py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -252,9 +341,23 @@ export default function TaskBreakdown() {
           {/* 左侧：任务清单区 */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-3xl shadow-xl shadow-[#A8F2E7]/10 p-8">
-              <h2 className="text-2xl font-light text-gray-900 mb-6">任务清单</h2>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-light text-gray-900">任务清单</h2>
+                <button
+                  onClick={handleCopy}
+                  className="flex items-center gap-2 px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-xl transition-all text-sm"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  {copied ? '已复制' : '复制'}
+                </button>
+              </div>
 
-              {tasks && <NestedTaskView tasks={tasks} expandedSections={expandedSections} toggleSection={toggleSection} />}
+              {/* 文本框显示 */}
+              <div className="bg-gray-50 rounded-2xl p-6 border-2 border-gray-100">
+                <pre className="whitespace-pre-wrap font-mono text-sm text-gray-700 leading-relaxed">
+                  {tasksText}
+                </pre>
+              </div>
             </div>
           </div>
 
@@ -360,271 +463,5 @@ export default function TaskBreakdown() {
         </div>
       </div>
     </div>
-  );
-}
-
-// 嵌套任务视图组件 - 年度>季度>月度>周度>日度
-interface NestedTaskViewProps {
-  tasks: TaskHierarchy;
-  expandedSections: { [key: string]: boolean };
-  toggleSection: (key: string) => void;
-}
-
-// 层级配置
-const LEVEL_CONFIG = [
-  { key: 'yearly', label: '年度', color: 'from-[#7DE3D4] to-[#5BD4C3]', textColor: 'text-white' },
-  { key: 'quarterly', label: '季度', color: 'from-[#A8F2E7] to-[#7DE3D4]', textColor: 'text-white', childKey: 'yearly' },
-  { key: 'monthly', label: '月度', color: 'from-[#C9F7EF] to-[#A8F2E7]', textColor: 'text-white', childKey: 'quarterly' },
-  { key: 'weekly', label: '周度', color: 'from-[#E4FBF7] to-[#C9F7EF]', textColor: 'text-teal-900', childKey: 'monthly' },
-  { key: 'daily', label: '日度', color: 'from-[#F0FDFB] to-[#E4FBF7]', textColor: 'text-teal-900', childKey: 'weekly' },
-];
-
-// 渲染单个任务项
-function TaskItem({ task }: { task: Task }) {
-  return (
-    <div className="p-3 bg-gray-50 rounded-lg mb-2 last:mb-0">
-      <h4 className="font-light text-gray-900 mb-1">{task.title}</h4>
-      {task.description && (
-        <p className="text-sm text-gray-600 font-light">{task.description}</p>
-      )}
-    </div>
-  );
-}
-
-// 渲染嵌套的任务区块
-function NestedTaskBlock({
-  level,
-  tasks,
-  expandedSections,
-  toggleSection,
-  parentKey = '',
-}: {
-  level: number;
-  tasks: Task[] | { [key: string]: Task[] } | { [weekKey: string]: { [date: string]: Task[] } };
-  expandedSections: { [key: string]: boolean };
-  toggleSection: (key: string) => void;
-  parentKey?: string;
-}) {
-  const config = LEVEL_CONFIG[level];
-  const isTasksArray = Array.isArray(tasks);
-
-  // 如果是数组（直接任务列表）
-  if (isTasksArray) {
-    const taskArray = tasks as Task[];
-    if (taskArray.length === 0) return null;
-
-    const sectionKey = parentKey ? `${parentKey}-${config.key}` : config.key;
-    const isExpanded = expandedSections[sectionKey];
-
-    return (
-      <div className="mb-2">
-        <button
-          type="button"
-          onClick={() => toggleSection(sectionKey)}
-          className={`w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r ${config.color} text-white transition-all hover:opacity-90`}
-        >
-          <div className="flex items-center gap-2">
-            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            <span className="font-light text-sm">{config.label}</span>
-            <span className="text-xs opacity-80">({taskArray.length})</span>
-          </div>
-        </button>
-        {isExpanded && (
-          <div className="ml-4 mt-2 space-y-2">
-            {taskArray.map((task) => (
-              <TaskItem key={task.id} task={task} />
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // 如果是对象（包含多个子区块）
-  const taskGroups = tasks as { [key: string]: Task[] } | { [weekKey: string]: { [date: string]: Task[] } };
-  const keys = Object.keys(taskGroups);
-  if (keys.length === 0) return null;
-
-  // 检查是否是日度层级的嵌套格式 {"第1个月-第1周": {"1月1日": [tasks]}}
-  const isNestedDailyFormat = keys.length > 0 && typeof taskGroups[keys[0]] === 'object' && !Array.isArray(taskGroups[keys[0]]);
-
-  // 日度层级使用嵌套格式时，需要特殊处理：展开所有周的日期
-  if (config.key === 'daily' && isNestedDailyFormat) {
-    const sectionKey = parentKey ? `${parentKey}-${config.key}` : config.key;
-    const isExpanded = expandedSections[sectionKey];
-
-    // 收集所有日期的任务
-    const allDateTasks: { [date: string]: Task[] } = {};
-    let totalCount = 0;
-    keys.forEach(weekKey => {
-      const weekData = taskGroups[weekKey] as { [date: string]: Task[] };
-      Object.entries(weekData).forEach(([date, tasks]) => {
-        allDateTasks[date] = tasks;
-        totalCount += tasks.length;
-      });
-    });
-
-    return (
-      <div className="mb-2">
-        <button
-          type="button"
-          onClick={() => toggleSection(sectionKey)}
-          className={`w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r ${config.color} ${config.textColor} transition-all hover:opacity-90`}
-        >
-          <div className="flex items-center gap-2">
-            {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-            <span className="font-light text-sm">{config.label}</span>
-            <span className="text-xs opacity-80">({totalCount})</span>
-          </div>
-        </button>
-        {isExpanded && (
-          <div className="ml-4 mt-2 space-y-2">
-            {Object.entries(allDateTasks).map(([date, tasks]) => {
-              const dateKey = `${sectionKey}-${date}`;
-              const dateExpanded = expandedSections[dateKey];
-              return (
-                <div key={date} className="mb-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleSection(dateKey)}
-                    className={`w-full flex items-center justify-between p-2 rounded-lg bg-gradient-to-r from-teal-100 to-teal-200 text-teal-900 transition-all hover:opacity-90`}
-                  >
-                    <div className="flex items-center gap-2">
-                      {dateExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                      <span className="font-light text-xs">{date}</span>
-                      <span className="text-xs opacity-70">({tasks.length})</span>
-                    </div>
-                  </button>
-                  {dateExpanded && (
-                    <div className="ml-4 mt-2 space-y-2">
-                      {tasks.map((task) => (
-                        <TaskItem key={task.id} task={task} />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  // 常规处理：遍历每个key（用于weekly等层级）
-  return (
-    <div className="ml-2">
-      {keys.map((key) => {
-        const childTasks = taskGroups[key];
-        const sectionKey = parentKey ? `${parentKey}-${config.key}-${key}` : `${config.key}-${key}`;
-        const isExpanded = expandedSections[sectionKey];
-
-        // 计算任务数量
-        let taskCount = 0;
-        if (Array.isArray(childTasks)) {
-          taskCount = childTasks.length;
-        } else if (typeof childTasks === 'object') {
-          taskCount = Object.values(childTasks).reduce((sum, tasks) => sum + (tasks as Task[]).length, 0);
-        }
-
-        return (
-          <div key={key} className="mb-2">
-            <button
-              type="button"
-              onClick={() => toggleSection(sectionKey)}
-              className={`w-full flex items-center justify-between p-3 rounded-xl bg-gradient-to-r ${config.color} ${config.textColor} transition-all hover:opacity-90`}
-            >
-              <div className="flex items-center gap-2">
-                {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                <span className="font-light text-sm">{key}</span>
-                <span className="text-xs opacity-80">({taskCount})</span>
-              </div>
-            </button>
-            {isExpanded && (
-              <div className="ml-3 mt-2 border-l-2 border-gray-200 pl-3">
-                {Array.isArray(childTasks) ? (
-                  // childTasks 是任务数组，递归渲染下一层级
-                  level + 1 < LEVEL_CONFIG.length ? (
-                    <NestedTaskBlock
-                      level={level + 1}
-                      tasks={childTasks}
-                      expandedSections={expandedSections}
-                      toggleSection={toggleSection}
-                      parentKey={sectionKey}
-                    />
-                  ) : (
-                    <div className="mt-2 space-y-2">
-                      {(childTasks as Task[]).map((task: Task) => (
-                        <TaskItem key={task.id} task={task} />
-                      ))}
-                    </div>
-                  )
-                ) : (
-                  // childTasks 是嵌套对象（日度层的周数据），递归渲染
-                  level + 1 < LEVEL_CONFIG.length ? (
-                    <NestedTaskBlock
-                      level={level + 1}
-                      tasks={childTasks}
-                      expandedSections={expandedSections}
-                      toggleSection={toggleSection}
-                      parentKey={sectionKey}
-                    />
-                  ) : (
-                    <div className="mt-2 space-y-2">
-                      {Object.entries(childTasks as { [date: string]: Task[] }).map(([date, tasks]) => (
-                        <div key={date} className="mb-2">
-                          <button
-                            type="button"
-                            onClick={() => toggleSection(`${sectionKey}-${date}`)}
-                            className={`w-full flex items-center justify-between p-2 rounded-lg bg-gradient-to-r from-teal-100 to-teal-200 text-teal-900 transition-all hover:opacity-90`}
-                          >
-                            <div className="flex items-center gap-2">
-                              {expandedSections[`${sectionKey}-${date}`] ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                              <span className="font-light text-xs">{date}</span>
-                              <span className="text-xs opacity-70">({tasks.length})</span>
-                            </div>
-                          </button>
-                          {expandedSections[`${sectionKey}-${date}`] && (
-                            <div className="ml-4 mt-2 space-y-2">
-                              {tasks.map((task) => (
-                                <TaskItem key={task.id} task={task} />
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// 主嵌套视图组件
-function NestedTaskView({ tasks, expandedSections, toggleSection }: NestedTaskViewProps) {
-  // 找到第一个有数据的层级
-  const firstNonEmptyLevel = LEVEL_CONFIG.findIndex(config => {
-    const data = tasks[config.key as keyof TaskHierarchy];
-    if (Array.isArray(data)) return (data as Task[]).length > 0;
-    if (data && typeof data === 'object') return Object.keys(data).length > 0;
-    return false;
-  });
-
-  if (firstNonEmptyLevel === -1) {
-    return <p className="text-gray-500 text-center py-8">暂无任务数据</p>;
-  }
-
-  return (
-    <NestedTaskBlock
-      level={firstNonEmptyLevel}
-      tasks={tasks[LEVEL_CONFIG[firstNonEmptyLevel].key as keyof TaskHierarchy]!}
-      expandedSections={expandedSections}
-      toggleSection={toggleSection}
-    />
   );
 }

@@ -325,9 +325,9 @@ class AIService:
         except:
             return [{"id": "q1", "question": "你的具体期望是什么？", "type": "text"}]
 
-    # ==================== Agent 5: 任务拆解 ====================
+    # ==================== Agent 6: 专业任务拆解器 ====================
     def _agent_breakdown(self, form_data: Dict[str, Any], analysis: Dict[str, str]) -> Dict[str, Any]:
-        """Agent 5: 根据前4个Agent的分析结果，进行任务拆解"""
+        """Agent 6: 专业任务拆解器 - 将需求拆解成月度→周度→日度的详细任务计划"""
         prompt = self._build_breakdown_prompt(form_data, analysis)
         response = self._call_llm(
             [{"role": "system", "content": self._get_breakdown_system_prompt()},
@@ -338,80 +338,90 @@ class AIService:
         return self._parse_breakdown_response(response, form_data)
 
     def _get_breakdown_system_prompt(self) -> str:
-        """任务拆解Agent的系统提示"""
-        return """你是一个任务拆解专家，负责将目标拆解成可执行的分层任务。
+        """Agent 6 任务拆解系统提示"""
+        return """你是 Agent 6 - 专业任务拆解器。你的核心能力是将任何需求拆解成可执行的月度→周度→日度任务计划。
 
-## 核心要求：嵌套层级结构
+## 你的输出格式
 
-你必须按照以下嵌套关系生成任务：
-
-**月度层级** - monthly：每个月的高层目标
-- 格式：{"第1个月 - 阶段名称": [任务数组]}
-- 每个月包含该月需要完成的核心任务
-
-**周度层级** - weekly：隶属于某月的第N周
-- 格式：{"第1个月 - 第1周": [任务数组], "第1个月 - 第2周": [任务数组], ...}
-- 关键：每周key必须包含"月份 - 周数"，例如"第1个月 - 第1周"
-- 每个月约4周，必须覆盖整个月的周数
-
-**日度层级** - daily：隶属于某周的具体日期任务
-- 格式：{"第1个月 - 第1周": {"1月1日": [任务数组], "1月2日": [任务数组], ...}, ...}
-- 关键：daily是嵌套结构，外层key是"月份 - 周"，内层key是具体日期（如"1月1日"）
-- 每周必须包含该周有任务的所有日期
-
-## 输出格式示例
+严格按照以下JSON格式输出：
 
 ```json
 {
+  "project_name": "项目名称",
+  "overview": "项目概述（1-2句话）",
   "monthly": {
-    "第1个月 - 基础学习": [
-      {"id": "m1-1", "title": "学习HTML基础", "description": "掌握HTML标签和语法", "estimated_hours": 15}
-    ]
+    "第1个月": {
+      "goal": "月度目标概述",
+      "output": "该月的最终产出",
+      "weeks": ["第1周", "第2周", "第3周", "第4周"]
+    }
   },
   "weekly": {
-    "第1个月 - 第1周": [
-      {"id": "w1-1", "title": "环境搭建与HTML入门", "description": "安装开发工具，学习HTML基础"}
-    ],
-    "第1个月 - 第2周": [
-      {"id": "w1-2", "title": "CSS样式学习", "description": "学习CSS选择器和基础样式"}
-    ],
-    "第1个月 - 第3周": [
-      {"id": "w1-3", "title": "JavaScript基础", "description": "学习JS变量和函数"}
-    ],
-    "第1个月 - 第4周": [
-      {"id": "w1-4", "title": "综合练习", "description": "制作第一个网页"}
-    ]
+    "第1周": {
+      "goal": "本周目标",
+      "output": "本周明确产出（如：产出：4个页面能互相跳转）",
+      "focus": "本周重点领域"
+    },
+    "第2周": {
+      "goal": "静态内容完成",
+      "output": "产出：每个页面像样、信息完整",
+      "focus": "内容与排版"
+    }
   },
   "daily": {
-    "第1个月 - 第1周": {
-      "1月1日": [
-        {"id": "d1-1", "title": "安装VS Code", "description": "下载安装代码编辑器", "estimated_hours": 1}
-      ],
-      "1月2日": [
-        {"id": "d1-2", "title": "学习HTML标签", "description": "掌握h1,p,div等常用标签", "estimated_hours": 2}
-      ],
-      "1月3日": [
-        {"id": "d1-3", "title": "编写第一个HTML页面", "description": "创建简单网页结构", "estimated_hours": 2}
-      ]
+    "第1周": {
+      "Day1": {
+        "title": "定主题与素材",
+        "description": "选博物馆风格 + 找20张图片素材，建本地文件夹",
+        "hours": 1,
+        "output": "产出：选定风格 + 20张素材"
+      },
+      "Day2": {
+        "title": "建项目结构",
+        "description": "创建pages/css/js/img文件夹，建4个html文件并互相链接",
+        "hours": 1,
+        "output": "产出：项目骨架完成"
+      }
     },
-    "第1个月 - 第2周": {
-      "1月8日": [
-        {"id": "d2-1", "title": "CSS基础语法", "description": "学习选择器和样式规则", "estimated_hours": 2}
-      ]
+    "第2周": {
+      "Day1": {
+        "title": "展览页卡片布局",
+        "description": "做4-8个展览卡片列表布局",
+        "hours": 1,
+        "output": "产出：卡片布局完成"
+      }
     }
   }
 }
 ```
 
+## 拆解原则
+
+### 月度任务
+- 描述该月的整体目标
+- 说明该月的最终产出
+- 列出包含的周次
+
+### 周度任务
+- 明确本周要达成什么
+- **必须用"产出："开头描述具体成果**
+- 说明本周的重点领域
+
+### 日度任务
+- 每天任务必须在1小时内完成
+- 描述要具体可执行（不是"学习XX"而是"做XX卡片布局"）
+- 每天都有明确的产出
+- 每周最后一天设为"机动"日，用于查漏补缺
+
 ## 重要规则
 
-1. **层级对应关系**：weekly的key必须对应monthly的月份，daily的key必须对应weekly的周
-2. **日期格式**：使用"M月D日"格式，如"1月1日"、"1月15日"
-3. **覆盖完整周期**：如果是1个月项目，生成4周；如果是1周项目，生成7天
-4. **每日任务具体可执行**：如"安装VS Code"而非"学习安装"
-5. **只返回需要的层级**：根据项目时长决定返回monthly+weekly+daily或weekly+daily
+1. **每日任务必须可执行**：避免模糊的描述，如"学习"、"了解"，要用具体的动作
+2. **产出导向**：每个周度任务和日度任务都要有明确的产出
+3. **时间约束**：假设每天只有1小时可用时间
+4. **渐进式**：任务要从简单到复杂，循序渐进
+5. **机动日**：每周最后一天设为机动日
 
-输出纯JSON，不要包含任何解释文字。"""
+只返回JSON，不要有任何其他文字。"""
 
     def _build_breakdown_prompt(self, form_data: Dict[str, Any], analysis: Dict[str, str]) -> str:
         """构建任务拆解的用户提示"""
@@ -420,6 +430,7 @@ class AIService:
         # 计算日期范围
         start_date = datetime.now()
         deadline = form_data.get('deadline')
+        daily_hours = form_data.get('daily_hours', '1')
 
         if deadline:
             try:
@@ -438,66 +449,47 @@ class AIService:
             months_count = 1
             deadline_date = start_date + timedelta(days=30)
 
-        # 跨平台日期格式化函数（Windows不支持%-m格式）
-        def format_date_cn(dt: datetime) -> str:
-            """格式化日期为中文格式（去除前导零）"""
-            return f"{dt.month}月{dt.day}日"
-
-        def format_date_full(dt: datetime) -> str:
-            """格式化完整日期"""
-            return f"{dt.year}年{dt.month}月{dt.day}日"
-
-        # 生成日期示例，帮助AI理解日期格式
+        # 生成日期示例
         date_examples = []
         current = start_date
-        for _ in range(min(7, days_left)):  # 最多生成7天示例
-            date_examples.append(format_date_cn(current))
+        for i in range(min(7, days_left)):
+            date_examples.append(f"Day{i+1}: {current.month}月{current.day}日")
             current += timedelta(days=1)
 
-        prompt = f"""请将以下目标拆解成可执行的任务：
+        prompt = f"""请将以下需求拆解成详细的月度→周度→日度任务计划：
 
-## 目标
+## 用户需求
 {form_data.get('goal', '')}
 
-## 时间规划（重要）
-- 开始日期：{format_date_full(start_date)}
-- 截止日期：{format_date_full(deadline_date)}
-- 总天数：约 {days_left} 天
-- 需要拆解：{months_count} 个月，{weeks_count} 周
-- 日期格式示例：{', '.join(date_examples[:5])}
+## 时间约束
+- 每天可用时间：{daily_hours} 小时
+- 总周期：{weeks_count} 周
+- 开始日期：{start_date.year}年{start_date.month}月{start_date.day}日
+
+## 日期格式示例
+{', '.join(date_examples)}
 
 ## AI分析结果
 - 任务类型：{analysis.get('task_type', '')}
 - 经验水平：{analysis.get('experience_level', '')}
 - 时间跨度：{analysis.get('time_span', '')}
 
-## 用户信息
-- 每日可用时间：{form_data.get('daily_hours', '')}小时
-- 工作日：{', '.join(form_data.get('working_days', [])) or '未指定'}"""
-
-        if form_data.get('blockers'):
-            prompt += f"\n- 可能阻碍：{form_data.get('blockers')}"
-
-        if form_data.get('resources'):
-            prompt += f"\n- 已有资源：{form_data.get('resources')}"
-
-        prompt += f"""
-
 ## 拆解要求
-1. 月度任务：生成 {months_count} 个月的月度目标
-2. 周度任务：每个月生成4周（第1周、第2周、第3周、第4周），周key格式为"第X个月 - 第Y周"
-3. 日度任务：每周生成具体日期的任务，日期格式为"M月D日"（如"1月1日"），日度key格式为"第X个月 - 第Y周"
-4. 日度任务外层是周，内层是日期，如 {{"第1个月 - 第1周": {{"1月1日": [...任务], "1月2日": [...任务]}}}}
+1. **月度任务**：描述整体目标和最终产出
+2. **周度任务**：每周目标 + 明确产出（必须用"产出："开头）
+3. **日度任务**：每天1小时内能完成的具体操作，每步都有产出
+4. **每周最后一天**：设为"机动"日，用于查漏补缺
+5. **任务递进**：从简单到复杂，循序渐进
 
-请严格按照嵌套JSON格式输出。"""
+请严格按照JSON格式输出，不要有其他文字。"""
         return prompt
 
     def _parse_breakdown_response(self, response: str, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """解析任务拆解响应"""
         print(f"[DEBUG] 解析任务拆解响应，响应长度: {len(response)} 字符")
-        print(f"[DEBUG] AI 响应内容（前500字符）: {response[:500]}")
         response = response.strip()
 
+        # 提取JSON
         if "```json" in response:
             start = response.find("```json") + 7
             end = response.rfind("```")
@@ -509,23 +501,91 @@ class AIService:
 
         try:
             result = json.loads(response)
-        except json.JSONDecodeError:
+
+            # 将Agent6格式转换为前端期望的格式
+            converted = self._convert_agent6_format(result)
+            return converted
+        except json.JSONDecodeError as e:
+            print(f"[ERROR] JSON解析失败: {e}")
+            print(f"[ERROR] 响应内容:\n{response[:500]}")
             # 解析失败，使用备用结构
             return self._get_fallback_tasks(form_data)
 
-        # 确保所有层级都存在
-        if "yearly" not in result:
-            result["yearly"] = []
-        if "quarterly" not in result:
-            result["quarterly"] = {}
-        if "monthly" not in result:
-            result["monthly"] = {}
-        if "weekly" not in result:
-            result["weekly"] = {}
-        if "daily" not in result:
-            result["daily"] = {}
+    def _convert_agent6_format(self, agent6_result: Dict[str, Any]) -> Dict[str, Any]:
+        """将Agent6格式转换为前端期望的嵌套格式"""
+        from datetime import datetime, timedelta
 
-        return result
+        converted = {
+            "yearly": [],
+            "quarterly": {},
+            "monthly": {},
+            "weekly": {},
+            "daily": {}
+        }
+
+        # 处理monthly
+        monthly = agent6_result.get('monthly', {})
+        for month_key, month_info in monthly.items():
+            # 生成月度任务列表
+            month_tasks = [{
+                "id": f"m-{month_key}",
+                "title": month_info.get('goal', month_key),
+                "description": month_info.get('output', ''),
+                "estimated_hours": 40
+            }]
+            converted["monthly"][month_key] = month_tasks
+
+        # 处理weekly - 转换为"第X个月 - 第Y周"格式
+        weekly = agent6_result.get('weekly', {})
+        for week_key, week_info in weekly.items():
+            # 简单的周key，如"第1周"
+            week_tasks = [{
+                "id": f"w-{week_key}",
+                "title": week_info.get('goal', week_key),
+                "description": week_info.get('output', ''),
+                "estimated_hours": 10
+            }]
+            converted["weekly"][week_key] = week_tasks
+
+        # 处理daily - 转换为嵌套结构
+        daily = agent6_result.get('daily', {})
+        current_date = datetime.now()
+
+        for week_key, week_days in daily.items():
+            # 提取周数，如"第1周" -> 1
+            week_num = 1
+            for num in range(1, 10):
+                if f"第{num}周" in week_key:
+                    week_num = num
+                    break
+
+            # 创建周级别的daily结构
+            week_daily_data = {}
+            day_offset = 0
+
+            for day_key, day_task in week_days.items():
+                # 计算实际日期
+                target_date = current_date + timedelta(days=(week_num - 1) * 7 + day_offset)
+                date_str = f"{target_date.month}月{target_date.day}日"
+
+                # 转换任务格式
+                task_list = [{
+                    "id": f"d-{week_key}-{day_key}",
+                    "title": day_task.get('title', ''),
+                    "description": day_task.get('description', ''),
+                    "output": day_task.get('output', ''),
+                    "estimated_hours": day_task.get('hours', 1)
+                }]
+
+                week_daily_data[date_str] = task_list
+                day_offset += 1
+
+            # 使用"第X个月-第X周"作为key
+            month_num = (week_num - 1) // 4 + 1
+            nested_key = f"第{month_num}个月-第{week_num}周"
+            converted["daily"][nested_key] = week_daily_data
+
+        return converted
 
     def _get_fallback_tasks(self, form_data: Dict[str, Any]) -> Dict[str, Any]:
         """备用任务结构"""

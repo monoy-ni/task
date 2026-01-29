@@ -605,26 +605,98 @@ function NestedTaskBlock({
   );
 }
 
-// 主嵌套视图组件
+// 主嵌套视图组件 - 文本框格式
 function NestedTaskView({ tasks, expandedSections, toggleSection }: NestedTaskViewProps) {
-  // 找到第一个有数据的层级
-  const firstNonEmptyLevel = LEVEL_CONFIG.findIndex(config => {
-    const data = tasks[config.key as keyof TaskHierarchy];
-    if (Array.isArray(data)) return (data as Task[]).length > 0;
-    if (data && typeof data === 'object') return Object.keys(data).length > 0;
-    return false;
-  });
+  const monthlyData = tasks.monthly;
+  const weeklyData = tasks.weekly || {};
+  const dailyData = tasks.daily || {};
 
-  if (firstNonEmptyLevel === -1) {
+  // 从 key 中提取编号的辅助函数
+  const extractNumber = (key: string, pattern: RegExp): number => {
+    const match = key.match(pattern);
+    return match ? parseInt(match[1], 10) : 0;
+  };
+
+  if (!monthlyData || Object.keys(monthlyData).length === 0) {
+    if (weeklyData && Object.keys(weeklyData).length > 0) {
+      return <NestedTaskBlock
+        level={3}
+        tasks={weeklyData}
+        expandedSections={expandedSections}
+        toggleSection={toggleSection}
+        parentKey="weekly"
+      />;
+    }
     return <p className="text-gray-500 text-center py-8">暂无任务数据</p>;
   }
 
+  // 将任务转换为纯文本格式
+  const renderTasksAsText = () => {
+    const lines: string[] = [];
+
+    Object.entries(monthlyData).forEach(([monthKey, monthTasks]) => {
+      const monthNumber = extractNumber(monthKey, /第(\d+)个月/);
+
+      // 月度任务
+      monthTasks.forEach(task => {
+        lines.push(`${task.title}`);
+        if (task.description) {
+          lines.push(`${task.description}`);
+        }
+        lines.push('');
+      });
+
+      // 周度任务
+      lines.push('周度任务');
+
+      const monthWeeks = Object.keys(weeklyData)
+        .filter(key => extractNumber(key, /第(\d+)个月/) === monthNumber)
+        .sort((a, b) => extractNumber(a, /第(\d+)周/) - extractNumber(b, /第(\d+)周/));
+
+      monthWeeks.forEach((weekKey) => {
+        const weekTasks = weeklyData[weekKey] as Task[];
+        const weekDisplayName = weekKey.replace(/第\d+个月-?/, '').trim();
+
+        weekTasks.forEach(task => {
+          lines.push(`${weekDisplayName}：${task.title}`);
+          if (task.description) {
+            lines.push(`  ${task.description}`);
+          }
+        });
+
+        // 日度任务
+        const matchingDailyKey = Object.keys(dailyData).find(dailyKey => {
+          const dailyMonthNum = extractNumber(dailyKey, /第(\d+)个月/);
+          const dailyWeekNum = extractNumber(dailyKey, /第(\d+)周/);
+          return dailyMonthNum === monthNumber && dailyWeekNum === extractNumber(weekKey, /第(\d+)周/);
+        });
+
+        const weekDailyData = matchingDailyKey
+          ? (dailyData[matchingDailyKey] as { [date: string]: Task[] })
+          : undefined;
+
+        if (weekDailyData && Object.keys(weekDailyData).length > 0) {
+          lines.push('');
+          Object.entries(weekDailyData).forEach(([date, dateTasks]) => {
+            const taskTitles = dateTasks.map(t => t.title).join('、');
+            lines.push(`${date}：${taskTitles}`);
+          });
+        }
+
+        lines.push('');
+      });
+
+      lines.push('---');
+    });
+
+    return lines.join('\n');
+  };
+
   return (
-    <NestedTaskBlock
-      level={firstNonEmptyLevel}
-      tasks={tasks[LEVEL_CONFIG[firstNonEmptyLevel].key as keyof TaskHierarchy]!}
-      expandedSections={expandedSections}
-      toggleSection={toggleSection}
-    />
+    <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-gray-200">
+      <div className="text-sm text-gray-700 leading-relaxed font-mono">
+        {renderTasksAsText()}
+      </div>
+    </div>
   );
 }
