@@ -23,14 +23,14 @@ export default function Root() {
       {/* 使用首页样式的导航栏 */}
       <nav
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-          isScrolled || !isHomePage
+          isScrolled
             ? 'py-3 px-4 md:px-8'
             : 'py-5 px-4 md:px-12'
         }`}
       >
         <div
           className={`mx-auto transition-all duration-500 ${
-            isScrolled || !isHomePage
+            isScrolled
               ? 'max-w-5xl glass rounded-full shadow-soft px-6 py-2'
               : 'max-w-7xl'
           }`}
@@ -77,6 +77,13 @@ export default function Root() {
                     评价
                     <span className="absolute -bottom-1 left-1/2 w-1.5 h-1.5 bg-mono-primary rounded-full transform -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform duration-300" />
                   </a>
+                  <Link
+                    to="/history"
+                    className="relative text-sm font-medium text-mono-text-secondary hover:text-mono-primary transition-colors duration-300 group"
+                  >
+                    历史记录
+                    <span className="absolute -bottom-1 left-1/2 w-1.5 h-1.5 bg-mono-primary rounded-full transform -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform duration-300" />
+                  </Link>
                 </>
               ) : projectId && !location.pathname.includes('/create') ? (
                 // 项目页面的导航链接
@@ -120,17 +127,6 @@ export default function Root() {
                   </Link>
                 </>
               ) : null}
-
-              {/* 历史记录链接 - 非首页时显示 */}
-              {!isHomePage && location.pathname !== '/history' && (
-                <Link
-                  to="/history"
-                  className="relative text-sm font-medium text-mono-text-secondary hover:text-mono-primary transition-colors duration-300 group"
-                >
-                  历史记录
-                  <span className="absolute -bottom-1 left-1/2 w-1.5 h-1.5 bg-mono-primary rounded-full transform -translate-x-1/2 scale-0 group-hover:scale-100 transition-transform duration-300" />
-                </Link>
-              )}
             </div>
 
             {/* CTA Button / 返回首页按钮 */}
@@ -197,6 +193,13 @@ export default function Root() {
                   >
                     评价
                   </a>
+                  <Link
+                    to="/history"
+                    className="text-lg font-medium text-mono-text py-2 px-4 rounded-xl hover:bg-mono-primary/10 transition-colors duration-300"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    历史记录
+                  </Link>
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);
@@ -233,13 +236,6 @@ export default function Root() {
                 </>
               ) : (
                 <>
-                  <Link
-                    to="/history"
-                    className="text-lg font-medium text-mono-text py-2 px-4 rounded-xl hover:bg-mono-primary/10 transition-colors duration-300"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    历史记录
-                  </Link>
                   <Link
                     to="/"
                     className="mt-4 bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full py-4 font-medium shadow-mono transition-all duration-300 text-center"
