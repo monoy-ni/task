@@ -1,20 +1,28 @@
-# Task Breakdown Tool
+# mono - 把大目标变成一步步可走的路
 
-> 一个基于 AI 的智能任务拆解工具，帮助你将宏大的目标分解为可执行的小任务
+> 一个基于 AI 的目标实现助手，帮助有目标但不知从何开始的人，通过智能拆解和每日任务跟踪，一步步达成目标
 
 ![React](https://img.shields.io/badge/React-18.3.1-blue)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)
-![Flask](https://img.shields.io/badge/Flask-3.0-green)
+![Vite](https://img.shields.io/badge/Vite-6.3.5-blue)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 ## 功能特性
 
-- **智能任务拆解** - 基于多 Agent AI 架构，将大目标分解为年度/季度/月度/周度/日度任务
-- **个性化分析** - 根据你的经验水平、时间安排、资源情况生成定制化计划
-- **甘特图可视化** - 直观展示任务时间线和依赖关系
-- **每日任务时间线** - 清晰展示每日待办事项
-- **复盘反思** - 记录完成情况，分析未完成任务原因，持续优化计划
-- **迭代优化** - 根据补充问题和反馈重新生成更精准的任务
+**核心功能**
+- **智能目标拆解** - AI 将大目标分解为年度/月度/日度的可执行小任务
+- **邮箱验证登录** - 安全的邮箱 OTP 验证，无需设置密码
+- **订阅付费体系** - 免费试用、订阅制、次数包多种方案
+- **额度管理** - 每日额度 + 购买次数双轨制
+- **甘特图可视化** - 直观展示任务进度和依赖关系
+- **每日任务时间线** - 清晰展示今日待办，四象限分类
+- **智能复盘** - 记录完成情况，AI 分析并自动调整计划
+
+**目标人群**
+- 有目标但不知从何开始的人
+- 容易被大目标吓退的人
+- 想改变但不知道从哪开始的人
+- 需要有人陪伴推动的人
 
 ## 技术栈
 
@@ -27,6 +35,7 @@
 | React Router | latest | 路由管理 |
 | Radix UI | latest | 无样式组件库 |
 | Tailwind CSS | 4.1.3 | 样式方案 |
+| Supabase | latest | 认证与数据库 |
 | Recharts | latest | 图表可视化 |
 
 ### 后端
@@ -44,46 +53,31 @@
 - Node.js 18+
 - Python 3.10+
 - 硅基流动 API Key ([获取地址](https://cloud.siliconflow.cn/account/ak))
+- Supabase 项目 ([创建地址](https://supabase.com))
 
 ### 安装与运行
 
 1. **克隆项目**
 ```bash
 git clone <repository-url>
-cd Task-Breakdown-Tool
+cd Task
 ```
 
 2. **安装前端依赖**
 ```bash
-cd frontend
+cd Kimi_Agent_mono/app
 npm install
 ```
 
-3. **配置后端环境**
-```bash
-cd backend
-pip install -r requirements.txt
-cp .env.example .env  # 编辑 .env 填入 API Key
+3. **配置环境变量**
+
+前端配置 (`app/.env`):
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
-4. **启动后端服务**
-```bash
-cd backend
-python app.py
-# 服务运行在 http://localhost:5000
-```
-
-5. **启动前端开发服务器**
-```bash
-cd frontend
-npm run dev
-# 前端运行在 http://localhost:5173
-```
-
-### 环境变量配置
-
-在 `backend/.env` 中配置以下变量：
-
+后端配置 (`backend/.env`):
 ```env
 # 硅基流动 API 配置
 SILICONFLOW_API_KEY=your_api_key_here
@@ -102,86 +96,144 @@ SECRET_KEY=your-secret-key
 CORS_ORIGINS=http://localhost:5173
 ```
 
+4. **配置 Supabase 数据库**
+
+在 Supabase SQL Editor 中运行：
+
+```sql
+-- 创建用户资料表
+CREATE TABLE profiles (
+  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT,
+  tier TEXT DEFAULT 'free' CHECK (tier IN ('free', 'monthly', 'yearly')),
+  daily_quota INTEGER DEFAULT 0,
+  daily_used INTEGER DEFAULT 0,
+  last_reset_date TEXT,
+  total_purchased INTEGER DEFAULT 10,
+  total_purchased_used INTEGER DEFAULT 0,
+  subscription_expires_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 启用 RLS
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own profile" ON profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+```
+
+5. **启动后端服务**
+```bash
+cd backend
+python app.py
+# 服务运行在 http://localhost:5000
+```
+
+6. **启动前端开发服务器**
+```bash
+cd Kimi_Agent_mono/app
+npm run dev
+# 前端运行在 http://localhost:5173
+```
+
+## 用户指南
+
+### 订阅方案
+
+| 方案 | 价格 | 权益 |
+|------|------|------|
+| 免费试用 | - | 注册送 10 次，永久有效 |
+| 月卡 | ¥29/月 | 每日 10 次 + 购买 8 折 |
+| 年卡 | ¥298/年 | 每日 30 次 + 购买 5 折 |
+| 20 次包 | ¥9.9 | 永不过期 |
+| 100 次包 | ¥39 | 永不过期，性价比 |
+
+### 使用流程
+
+1. **创建目标** - 描述你想达成的事情
+2. **AI 拆解** - AI 自动生成任务清单
+3. **每日执行** - 完成当天的小任务
+4. **进度跟踪** - 甘特图可视化展示进度
+5. **智能复盘** - AI 分析并自动调整后续计划
+
 ## 项目结构
 
 ```
-task-breakdown-tool/
-├── frontend/                   # 前端目录
-│   ├── src/                   # React 源码
-│   │   ├── components/        # 组件
-│   │   │   ├── ui/           # Radix UI 基础组件
-│   │   │   ├── mono/         # Mono 主题组件
+Task/
+├── Kimi_Agent_mono/           # 前端应用
+│   ├── public/                 # 静态资源
+│   ├── src/
+│   │   ├── components/          # 组件
+│   │   │   ├── ui/             # Radix UI 基础组件
+│   │   │   └── ...             # 其他组件
+│   │   ├── pages/               # 页面组件
+│   │   │   ├── Login.tsx        # 登录页
+│   │   │   ├── Pricing.tsx      # 订阅页
+│   │   │   ├── Profile.tsx       # 个人中心
+│   │   │   ├── CreateProject.tsx
+│   │   │   ├── GanttView.tsx
 │   │   │   └── ...
-│   │   ├── pages/            # 页面组件
-│   │   ├── types/            # 类型定义
-│   │   ├── utils/            # 工具函数
+│   │   ├── sections/            # 首页区块
+│   │   ├── contexts/             # AuthContext
+│   │   ├── lib/                  # Supabase 客端
 │   │   ├── App.tsx
 │   │   └── routes.tsx
-│   ├── build/                # 构建输出
-│   ├── index.html
 │   ├── package.json
 │   └── vite.config.ts
-├── backend/                   # 后端目录
-│   ├── models/               # 数据模型
-│   │   └── schema.py
-│   ├── services/             # 服务层
-│   │   └── ai_service.py
-│   ├── app.py
+├── backend/                    # 后端 API
+│   ├── app.py                 # Flask 主应用
+│   ├── services/
+│   │   └── ai_service.py        # AI 服务
 │   └── requirements.txt
-├── docs/                      # 文档目录
-│   └── PRODUCT_DESCRIPTION.md
-├── README.md                  # 项目说明
-└── PROJECT_PLAN.md            # 项目规划
+├── docs/                       # 文档
+└── README.md
 ```
-
-## 页面说明
-
-| 页面 | 路由 | 功能 |
-|------|------|------|
-| 首页 | `/` | 项目入口和欢迎页面 |
-| 创建项目 | `/create` | 填写任务目标和相关信息 |
-| 任务拆解 | `/breakdown/:id` | 查看AI生成的任务拆解结果 |
-| 甘特图 | `/gantt/:id` | 可视化展示任务时间线 |
-| 每日任务 | `/timeline/:id` | 按日期查看任务列表 |
-| 复盘 | `/review/:id` | 记录完成情况和反思 |
 
 ## 开发指南
 
 ### 添加新页面
 
-1. 在 `frontend/src/pages/` 创建页面组件
-2. 在 `frontend/src/routes.tsx` 添加路由配置
-3. 如需新 API，在 `backend/app.py` 添加对应接口
+1. 在 `app/src/pages/` 创建页面组件
+2. 在 `app/src/routes.tsx` 添加路由配置
 
-### 添加新的 AI Agent
+### 修改主题颜色
 
-编辑 `backend/services/ai_service.py`，参考现有的 5 个 Agent 实现：
+编辑 `app/src/index.css` 中的 CSS 变量：
 
-```python
-async def agent_6_new_analysis(form_data: dict) -> dict:
-    """新的分析 Agent"""
-    # 实现你的逻辑
-    pass
+```css
+--mono-primary: 10, 166, 149;  /* 薄荷绿 */
+--mono-primary-light: 167, 232, 216;
+/* ... */
 ```
+
+### 修改 AI Agent
+
+编辑 `backend/services/ai_service.py` 中的对应 Agent 函数。
 
 ## 常见问题
 
-**Q: AI 拆解效果不理想？**
-A: 可以通过补充问题页面提供更多信息，然后点击"重新生成"让 AI 优化计划。
+**Q: 如何配置邮件发送？**
+A: 在 Supabase 控制台进入 Authentication → Email Templates，确认 Confirm signup 模板使用 OTP 格式（包含 `{{.Code}}` 变量）。
 
-**Q: 数据会保存吗？**
-A: 当前版本使用内存存储，重启后数据会丢失。生产环境建议接入数据库。
+**Q: 数据存储在哪里？**
+A: 用户数据存储在 Supabase PostgreSQL 数据库中，项目数据暂未持久化，刷新页面会丢失。
 
 **Q: 如何更换 AI 模型？**
 A: 修改 `backend/.env` 中的 `MODEL_ANALYSIS` 和 `MODEL_GENERATION` 配置。
 
-## 待办事项
+**Q: 免费用户的 10 次用完后怎么办？**
+A: 可以购买次数包（20次 ¥9.9 或 100次 ¥39），或订阅月卡/年卡获得每日额度。
 
-- [ ] 接入数据库持久化存储
-- [ ] 添加用户认证系统
-- [ ] 支持导出任务计划（PDF/Excel）
-- [ ] 添加任务提醒功能
-- [ ] 支持多人协作项目
+## 更新日志
+
+### v1.0.0 (2025-01)
+- 初始发布
+- 邮箱 OTP 登录
+- 订阅付费体系
+- 智能目标拆解
+- 甘特图和每日任务视图
 
 ## 许可证
 
@@ -191,5 +243,5 @@ MIT License
 
 - [Radix UI](https://www.radix-ui.com/) - 无障碍的 UI 组件库
 - [Tailwind CSS](https://tailwindcss.com/) - 原子化 CSS 框架
+- [Supabase](https://supabase.com/) - 开源 Firebase 替代方案
 - [硅基流动](https://siliconflow.cn/) - AI 模型 API 服务
-- 原设计来自 [Figma](https://www.figma.com/design/FPkZFWwuyZeBXFrr0LBP09/Task-Breakdown-Tool)
