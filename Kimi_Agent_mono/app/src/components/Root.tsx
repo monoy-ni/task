@@ -1,11 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router';
 import { useState, useEffect } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Root() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { user, userProfile } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -130,21 +132,46 @@ export default function Root() {
             </div>
 
             {/* CTA Button / 返回首页按钮 */}
-            <div className="hidden md:block">
-              {!isHomePage ? (
-                <Link
-                  to="/"
-                  className="bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full px-6 py-2.5 text-sm font-medium shadow-mono hover:shadow-mono-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  返回首页
-                </Link>
+            <div className="hidden md:flex items-center gap-3">
+              {user ? (
+                <>
+                  {isHomePage && (
+                    <Link
+                      to="/pricing"
+                      className="text-sm font-medium text-mono-text-secondary hover:text-mono-primary transition-colors"
+                    >
+                      升级会员
+                    </Link>
+                  )}
+                  <Link
+                    to="/profile"
+                    className="flex items-center gap-2 bg-mono-bg hover:bg-mono-primary/10 rounded-full px-4 py-2 transition-all"
+                  >
+                    <div className="w-7 h-7 bg-mono-primary/20 rounded-full flex items-center justify-center">
+                      <span className="text-xs font-bold text-mono-primary">
+                        {(userProfile?.email || user?.email || 'U').charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-mono-text">
+                      {userProfile ? (userProfile.tier === 'free' ? '免费用户' : userProfile.tier === 'monthly' ? '月卡' : '年卡') : '用户'}
+                    </span>
+                  </Link>
+                </>
               ) : (
-                <button
-                  onClick={() => window.location.href = '/create'}
-                  className="bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full px-6 py-2.5 text-sm font-medium shadow-mono hover:shadow-mono-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  开始使用
-                </button>
+                <>
+                  <Link
+                    to="/login"
+                    className="text-sm font-medium text-mono-text-secondary hover:text-mono-primary transition-colors"
+                  >
+                    登录
+                  </Link>
+                  <Link
+                    to="/login"
+                    className="bg-mono-primary hover:bg-mono-primary-dark text-white rounded-full px-6 py-2.5 text-sm font-medium shadow-mono hover:shadow-mono-lg transition-all duration-300 transform hover:scale-105"
+                  >
+                    开始使用
+                  </Link>
+                </>
               )}
             </div>
 
@@ -209,6 +236,15 @@ export default function Root() {
                   >
                     开始使用
                   </button>
+                  {!user && (
+                    <Link
+                      to="/login"
+                      className="text-center text-mono-text-secondary py-2 px-4 hover:text-mono-primary transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      已有账号？去登录
+                    </Link>
+                  )}
                 </>
               ) : projectId && !location.pathname.includes('/create') ? (
                 <>
