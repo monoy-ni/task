@@ -130,7 +130,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/`,
+        // 不设置 emailRedirectTo，这样会发送 OTP 而不是 Magic Link
+        shouldCreateUser: true,
       },
     });
 

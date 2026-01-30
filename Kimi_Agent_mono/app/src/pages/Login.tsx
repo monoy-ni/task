@@ -24,6 +24,14 @@ const Login = () => {
 
     try {
       await sendOtp(email);
+
+      // 开发模式：提示用户检查控制台或垃圾邮件
+      console.log('=== 验证码已发送 ===');
+      console.log('收件人:', email);
+      console.log('如果没有收到邮件，请检查垃圾邮件文件夹');
+      console.log('或在 Supabase 控制台 > Authentication > Users 中查看');
+      console.log('====================');
+
       setStep('otp');
       setCountdown(60);
       const timer = setInterval(() => {
@@ -36,6 +44,7 @@ const Login = () => {
         });
       }, 1000);
     } catch (err: any) {
+      console.error('发送验证码错误:', err);
       setError(err.message || '发送验证码失败，请稍后重试');
     } finally {
       setLoading(false);
@@ -124,6 +133,16 @@ const Login = () => {
               <p className="text-sm text-mono-text-secondary mb-6">
                 已发送至 {email}
               </p>
+
+              {/* 开发模式提示 */}
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4 text-xs text-yellow-800">
+                <p className="font-medium mb-1">未收到邮件？</p>
+                <ul className="list-disc list-inside space-y-1 text-yellow-700">
+                  <li>检查垃圾邮件文件夹</li>
+                  <li>Supabase 内置邮件有延迟，可能需要几分钟</li>
+                  <li>开发环境建议配置自定义 SMTP</li>
+                </ul>
+              </div>
 
               <div className="space-y-6">
                 <div>
