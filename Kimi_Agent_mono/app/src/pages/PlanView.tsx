@@ -132,7 +132,7 @@ export default function PlanView() {
         </div>
 
         <div className="p-6">
-          {activeTab === 'gantt' && <GanttChart plan={plan} onUpdatePlan={updatePlan} />}
+          {activeTab === 'gantt' && <GanttChart plan={plan} />}
           {activeTab === 'overview' && <OverviewTab plan={plan} project={project} />}
         </div>
       </div>

@@ -1,0 +1,10 @@
+"""
+WSGI 入口文件
+用于 gunicorn + nginx 部署
+"""
+import os
+from app import app
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)

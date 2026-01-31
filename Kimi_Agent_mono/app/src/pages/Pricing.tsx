@@ -41,6 +41,7 @@ const Pricing = () => {
     {
       id: 'free',
       ...TIER_CONFIGS.free,
+      price: 0,
       features: ['注册即送10次', '永久有效', '体验核心功能'],
       highlight: false,
     },

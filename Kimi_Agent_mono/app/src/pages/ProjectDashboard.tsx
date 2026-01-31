@@ -80,14 +80,14 @@ export default function ProjectDashboard() {
         // 月度任务
         Object.values(data.tasks.monthly || {}).forEach((monthTasks: any) => {
           monthTasks.forEach((task: Task) => {
-            allTasks.push({ ...task, level: 'monthly' });
+            allTasks.push({ ...task, level: 'month' });
           });
         });
 
         // 周度任务
         Object.values(data.tasks.weekly || {}).forEach((weekTasks: any) => {
           weekTasks.forEach((task: Task) => {
-            allTasks.push({ ...task, level: 'weekly' });
+            allTasks.push({ ...task, level: 'week' });
           });
         });
 
@@ -97,7 +97,7 @@ export default function ProjectDashboard() {
             Object.entries(weekData).forEach(([dateKey, dateTasks]: [string, any]) => {
               if (Array.isArray(dateTasks)) {
                 dateTasks.forEach((task: Task) => {
-                  allTasks.push({ ...task, level: 'daily', date: dateKey });
+                  allTasks.push({ ...task, level: 'day', date: dateKey });
                 });
               }
             });
