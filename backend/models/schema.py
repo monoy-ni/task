@@ -71,3 +71,54 @@ class RegenerateTasksRequest(BaseModel):
     project_id: str
     form_data: FormData
     answers: dict[str, str | List[str]] = Field(default_factory=dict)
+
+
+# ==================== 快速任务模式 Schema ====================
+
+class StepGuide(BaseModel):
+    """节点完成指南"""
+    description: str = Field(..., description="节点概述")
+    steps: List[str] = Field(default_factory=list, description="具体操作步骤")
+    completion_criteria: List[str] = Field(default_factory=list, description="完成标准/验收条件")
+    pain_points: List[str] = Field(default_factory=list, description="痛点难点提醒")
+
+
+class RawCheckpoint(BaseModel):
+    """原始检测节点（Agent A 提取）"""
+    id: str = Field(..., description="节点ID")
+    name: str = Field(..., description="节点名称")
+    estimated_time: str = Field(..., description="预计时间，如 30分钟")
+    depends_on: List[str] = Field(default_factory=list, description="依赖的节点ID列表")
+
+
+class Checkpoint(BaseModel):
+    """检测节点（完整）"""
+    id: str
+    name: str
+    step_guide: StepGuide
+    estimated_time: str
+    depends_on: List[str] = Field(default_factory=list)
+    check_method: str = "self"
+    status: str = "pending"  # pending/in_progress/completed/skipped
+
+
+class QuickTaskMeta(BaseModel):
+    """快速任务元数据"""
+    total_checkpoints: int
+    sources_analyzed: int
+    confidence: float
+    search_time_ms: Optional[int] = None
+
+
+class QuickTaskResponse(BaseModel):
+    """快速任务响应"""
+    mode: str = "quick"
+    original_idea: str = ""
+    estimated_total_time: str = ""
+    checkpoints: List[Checkpoint] = Field(default_factory=list)
+    meta: Optional[QuickTaskMeta] = None
+
+
+class QuickTaskRequest(BaseModel):
+    """快速任务请求"""
+    idea: str = Field(..., description="用户想法")

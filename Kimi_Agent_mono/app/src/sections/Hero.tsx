@@ -130,6 +130,9 @@ const Hero = () => {
                 立即开始
                 <span className="transition-transform duration-300 group-hover:translate-x-1">→</span>
               </button>
+              <button onClick={() => navigate('/quick-task')} className="rounded-full px-8 py-4 text-lg font-medium border-2 border-mono-border hover:border-mono-primary hover:text-mono-primary transition-all duration-300">
+                快速任务
+              </button>
               <button onClick={() => navigate('/about')} className="rounded-full px-8 py-4 text-lg font-medium border-2 border-mono-border hover:border-mono-primary hover:text-mono-primary transition-all duration-300">
                 了解更多
               </button>

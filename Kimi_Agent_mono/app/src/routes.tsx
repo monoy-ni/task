@@ -14,6 +14,7 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Pricing from "./pages/Pricing";
 import Profile from "./pages/Profile";
+import QuickTask from "./pages/QuickTask";
 
 export const router = createBrowserRouter([
   {
@@ -23,6 +24,7 @@ export const router = createBrowserRouter([
       { index: true, Component: App },
       { path: "create", Component: CreateProject },
       { path: "task-breakdown", Component: TaskBreakdown },
+      { path: "quick-task", Component: QuickTask },
       { path: "test-breakdown", Component: TestBreakdown },
       { path: "about", Component: About },
       { path: "history", Component: History },

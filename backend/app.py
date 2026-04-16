@@ -3,6 +3,7 @@ Flask 主应用
 任务拆解工具后端 API
 """
 import os
+import uuid
 from datetime import datetime
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -13,8 +14,10 @@ from models.schema import (
     TaskBreakdownResponse,
     UpdateAnswersRequest,
     RegenerateTasksRequest,
+    QuickTaskRequest,
 )
 from services.ai_service import get_ai_service
+from services.quick_task_service import get_quick_task_service
 
 load_dotenv()
 
@@ -26,6 +29,9 @@ CORS(app, resources={r"/*": {"origins": cors_origins}})
 
 # 内存存储（生产环境应使用数据库）
 projects_storage = {}
+
+# 快速任务存储
+quick_tasks_storage = {}
 
 
 @app.route("/", methods=["GET"])
@@ -272,6 +278,137 @@ def list_projects():
                 "created_at": p["created_at"]
             }
             for pid, p in projects_storage.items()
+        ]
+    })
+
+
+# ==================== 快速任务模式 API ====================
+
+@app.route("/api/quick-task/generate", methods=["POST"])
+def generate_quick_task():
+    """
+    生成快速任务检测节点
+
+    POST /api/quick-task/generate
+    {
+        "idea": "把登录页面改成Vercel风格",
+        "time_estimate": "2-4小时"  // 可选
+    }
+    """
+    print("\n" + "="*50)
+    print(f"[{datetime.now().strftime('%H:%M:%S')}] 收到 /api/quick-task/generate 请求")
+
+    try:
+        data = request.get_json()
+        if not data or "idea" not in data:
+            return jsonify({"error": "缺少 idea 参数"}), 400
+
+        idea = data.get("idea")
+        time_estimate = data.get("time_estimate")
+
+        print(f"[DEBUG] idea: {idea}")
+
+        # 调用快速任务服务
+        quick_task_service = get_quick_task_service()
+        result = quick_task_service.generate_checkpoints(idea, time_estimate)
+
+        # 存储快速任务
+        task_id = f"qt-{uuid.uuid4().hex[:8]}"
+        quick_tasks_storage[task_id] = {
+            "idea": idea,
+            "result": result,
+            "created_at": datetime.now().isoformat()
+        }
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "task_id": task_id,
+                **result
+            }
+        })
+
+    except Exception as e:
+        import traceback
+        print(f"[ERROR] 快速任务生成失败: {e}")
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/quick-task/<task_id>", methods=["GET"])
+def get_quick_task(task_id: str):
+    """
+    获取快速任务详情
+
+    GET /api/quick-task/{task_id}
+    """
+    task = quick_tasks_storage.get(task_id)
+    if not task:
+        return jsonify({"error": "任务不存在"}), 404
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "task_id": task_id,
+            **task["result"]
+        }
+    })
+
+
+@app.route("/api/quick-task/<task_id>/step/<step_id>", methods=["PATCH"])
+def update_checkpoint_status(task_id: str, step_id: str):
+    """
+    更新检测节点状态
+
+    PATCH /api/quick-task/{task_id}/step/{step_id}
+    {
+        "status": "completed"  # pending/in_progress/completed/skipped
+    }
+    """
+    task = quick_tasks_storage.get(task_id)
+    if not task:
+        return jsonify({"error": "任务不存在"}), 404
+
+    try:
+        data = request.get_json()
+        new_status = data.get("status")
+
+        # 更新对应步骤的状态
+        for cp in task["result"]["checkpoints"]:
+            if cp["id"] == step_id:
+                cp["status"] = new_status
+                break
+
+        task["updated_at"] = datetime.now().isoformat()
+
+        return jsonify({
+            "success": True,
+            "message": "状态已更新"
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@app.route("/api/quick-task", methods=["GET"])
+def list_quick_tasks():
+    """
+    获取所有快速任务列表
+
+    GET /api/quick-task
+    """
+    return jsonify({
+        "success": True,
+        "data": [
+            {
+                "task_id": tid,
+                "idea": t["idea"],
+                "original_idea": t["result"]["original_idea"],
+                "estimated_total_time": t["result"]["estimated_total_time"],
+                "checkpoints_count": t["result"]["meta"]["total_checkpoints"],
+                "created_at": t["created_at"]
+            }
+            for tid, t in quick_tasks_storage.items()
         ]
     })
 
