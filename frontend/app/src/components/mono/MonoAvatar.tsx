@@ -2,7 +2,7 @@ interface MonoAvatarProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   withBg?: boolean;
   withGlow?: boolean;
-  mood?: 'happy' | 'thinking' | 'celebrating' | 'curious';
+  mood?: 'happy' | 'thinking' | 'celebrating' | 'curious' | 'excited' | 'worried';
   className?: string;
 }
 

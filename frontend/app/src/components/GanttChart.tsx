@@ -4,7 +4,7 @@ import { AlertTriangle, Sparkles, ChevronRight, ChevronDown } from 'lucide-react
 
 interface GanttChartProps {
   plan: Plan;
-  onPlanUpdate: (plan: Plan) => void;
+  onPlanUpdate?: (plan: Plan) => void;
 }
 
 export default function GanttChart({ plan, onPlanUpdate }: GanttChartProps) {
@@ -76,7 +76,7 @@ export default function GanttChart({ plan, onPlanUpdate }: GanttChartProps) {
     const finalTasks = propagateChanges(task, updatedTasks);
 
     const updatedPlan = { ...plan, tasks: finalTasks };
-    onPlanUpdate(updatedPlan);
+    onPlanUpdate?.(updatedPlan);
     setDraggingTask(null);
   };
 
@@ -221,7 +221,7 @@ export default function GanttChart({ plan, onPlanUpdate }: GanttChartProps) {
     }
 
     const updatedPlan = { ...plan, tasks: updatedTasks };
-    onPlanUpdate(updatedPlan);
+    onPlanUpdate?.(updatedPlan);
     setSuggestions([]);
   };
 

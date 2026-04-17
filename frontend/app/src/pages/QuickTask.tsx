@@ -3,12 +3,8 @@ import { useNavigate } from 'react-router';
 import { MonoAvatar } from '../components/mono';
 import { QuickTaskInput } from '../components/quick-task/QuickTaskInput';
 import { QuickTaskChain } from '../components/quick-task/QuickTaskChain';
-import { QuickTaskResponse, Checkpoint } from '../types/quickTask';
+import { QuickTaskResult, Checkpoint } from '../types/quickTask';
 import { generateQuickTask, updateCheckpointStatus } from '../services/quickTaskApi';
-
-interface QuickTaskData extends QuickTaskResponse {
-  task_id: string;
-}
 
 export default function QuickTask() {
   const navigate = useNavigate();
@@ -16,7 +12,7 @@ export default function QuickTask() {
   const [step, setStep] = useState<'input' | 'loading' | 'result'>('input');
   const [idea, setIdea] = useState('');
   const [timeEstimate, setTimeEstimate] = useState('');
-  const [taskData, setTaskData] = useState<QuickTaskData | null>(null);
+  const [taskData, setTaskData] = useState<QuickTaskResult | null>(null);
   const [checkpoints, setCheckpoints] = useState<Checkpoint[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -30,7 +26,7 @@ export default function QuickTask() {
     try {
       const response = await generateQuickTask(submittedIdea, submittedTime);
       if (response.success && response.data) {
-        setTaskData(response.data as QuickTaskData);
+        setTaskData(response.data);
         setCheckpoints(response.data.checkpoints);
         setStep('result');
       } else {

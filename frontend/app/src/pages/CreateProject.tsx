@@ -140,10 +140,11 @@ export default function CreateProject() {
           {/* 3. 截止日期（条件显示） */}
           {formData.hasDeadline === 'yes' && (
             <div>
-              <label className="block text-lg font-light text-gray-900 mb-3">
+              <label htmlFor="project-deadline" className="block text-lg font-light text-gray-900 mb-3">
                 截止日期
               </label>
               <input
+                id="project-deadline"
                 type="date"
                 value={formData.deadline}
                 onChange={(e) => updateField('deadline', e.target.value)}

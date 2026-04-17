@@ -38,12 +38,15 @@ export interface QuickTaskData {
   meta: QuickTaskMeta;
 }
 
+export interface QuickTaskResult extends QuickTaskData {
+  task_id: string;
+}
+
 // API 响应
 export interface QuickTaskResponse {
   success: boolean;
-  data: {
-    task_id: string;
-  } & QuickTaskData;
+  data?: QuickTaskResult;
+  error?: string;
 }
 
 // 快速任务请求

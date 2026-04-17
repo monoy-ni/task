@@ -449,6 +449,7 @@ function TimelineTaskCard({
           {task.status === 'todo' && (
             <>
               <button
+                type="button"
                 onClick={handleStart}
                 className="px-3 py-1.5 bg-emerald-500 text-white text-sm rounded hover:bg-emerald-600"
                 title="开始任务"
@@ -456,8 +457,11 @@ function TimelineTaskCard({
                 开始
               </button>
               <button
+                type="button"
                 onClick={() => setShowBlockInput(true)}
                 className="p-1.5 text-gray-400 hover:text-gray-600"
+                title="标记为阻塞"
+                aria-label="标记为阻塞"
               >
                 <AlertCircle className="size-4" />
               </button>
@@ -467,6 +471,7 @@ function TimelineTaskCard({
           {task.status === 'in-progress' && (
             <>
               <button
+                type="button"
                 onClick={handleComplete}
                 className="px-3 py-1.5 bg-emerald-600 text-white text-sm rounded hover:bg-emerald-700"
                 title="完成任务"
@@ -474,8 +479,11 @@ function TimelineTaskCard({
                 完成
               </button>
               <button
+                type="button"
                 onClick={() => setShowBlockInput(true)}
                 className="p-1.5 text-gray-400 hover:text-gray-600"
+                title="标记为阻塞"
+                aria-label="标记为阻塞"
               >
                 <AlertCircle className="size-4" />
               </button>

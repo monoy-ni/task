@@ -180,6 +180,7 @@ export default function DailyTasks() {
               <span className="text-sm text-blue-700">可用时间</span>
               {!editingHours ? (
                 <button
+                  type="button"
                   onClick={() => setEditingHours(true)}
                   className="text-xs text-blue-600 hover:text-blue-700 underline"
                 >
@@ -193,11 +194,14 @@ export default function DailyTasks() {
                   type="number"
                   value={availableHours}
                   onChange={(e) => setAvailableHours(parseFloat(e.target.value))}
+                  title="可用时间（小时）"
+                  aria-label="可用时间（小时）"
                   className="w-20 px-2 py-1 border border-gray-300 rounded text-lg"
                   step="0.5"
                   min="0"
                 />
                 <button
+                  type="button"
                   onClick={updateAvailableHours}
                   className="px-2 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
                 >
